@@ -1,0 +1,3308 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RATIONAL RUSH: SAVE MATH city </title>
+<style>
+  :root {
+    --bg-dark: #0d1322;
+    --panel-bg: rgba(16, 24, 48, 0.95);
+    --panel-border: #2a3a68;
+    --accent-cyan: #4fc3d9;
+    --accent-yellow: #ffd75e;
+    --accent-purple: #8b7bd8;
+    --accent-red: #ff6b6b;
+    --accent-green: #5fd38d;
+    --text-light: #eef3ff;
+    --text-dim: #9ab0d6;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #080c16;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text-light);
+  }
+  #game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+  }
+  canvas {
+    display: block;
+    background: #101830;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    image-rendering: auto;
+  }
+
+  /* HUD ATAS */
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+    font-size: 15px;
+    font-weight: 700;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  }
+  .hud-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(13, 19, 34, 0.88);
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    pointer-events: auto;
+  }
+  .hud-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hud-heart { color: var(--accent-red); font-size: 18px; }
+  .hud-ammo { color: var(--accent-yellow); }
+  .hud-time { color: var(--accent-cyan); font-family: monospace; font-size: 17px; }
+  .hud-cores { color: #38ef7d; }
+
+  /* MISI SEMASA (KANAN ATAS) */
+  #mission-hud {
+    position: absolute;
+    top: 68px;
+    right: 14px;
+    background: rgba(16, 24, 48, 0.92);
+    border-left: 4px solid var(--accent-yellow);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--accent-yellow);
+    pointer-events: none;
+    z-index: 20;
+    max-width: 290px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  #mission-hud span { color: var(--text-light); font-weight: 600; }
+
+  /* SKRIN DAN MODAL */
+  .overlay-screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(8, 12, 22, 0.94);
+    z-index: 40;
+    padding: 20px;
+    text-align: center;
+  }
+  .overlay-screen.active { display: flex; }
+
+  .panel-card {
+    background: var(--panel-bg);
+    border: 2px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 24px 32px;
+    max-width: 780px;
+    width: 92%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  h1 {
+    font-size: 32px;
+    color: var(--accent-yellow);
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(255, 215, 94, 0.3);
+  }
+  h2 {
+    font-size: 22px;
+    color: var(--accent-cyan);
+  }
+  p {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-light);
+  }
+
+  /* BUTANG */
+  .btn {
+    min-height: 50px;
+    min-width: 140px;
+    padding: 10px 22px;
+    font-size: 17px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: linear-gradient(180deg, #ff9f43, #ee5253);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(238, 82, 83, 0.4);
+    transition: transform 0.1s, filter 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:active { transform: scale(0.96); }
+  .btn-cyan {
+    background: linear-gradient(180deg, #4fc3d9, #1e90ff);
+    box-shadow: 0 4px 14px rgba(30, 144, 255, 0.4);
+  }
+  .btn-green {
+    background: linear-gradient(180deg, #5fd38d, #10ac84);
+    box-shadow: 0 4px 14px rgba(16, 172, 132, 0.4);
+  }
+  .btn-cancel {
+    background: #64748b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    min-height: 38px;
+    min-width: 100px;
+    padding: 6px 14px;
+    font-size: 14px;
+  }
+  .btn-small {
+    min-height: 38px;
+    padding: 6px 14px;
+    font-size: 14px;
+  }
+
+  /* MODAL SOALAN */
+  #question-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 8, 16, 0.95);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  #question-card {
+    background: #131c33;
+    border: 2px solid var(--accent-cyan);
+    border-radius: 14px;
+    padding: 22px 28px;
+    max-width: 760px;
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    position: relative;
+  }
+  .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 8px;
+    gap: 10px;
+  }
+  .q-timer-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .q-timer {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-yellow);
+    background: rgba(0,0,0,0.4);
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--accent-yellow);
+  }
+  .q-story {
+    font-size: 15px;
+    color: var(--accent-cyan);
+    font-style: italic;
+    flex: 1;
+    text-align: left;
+  }
+  .q-text {
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--text-light);
+    line-height: 1.4;
+    min-height: 48px;
+    text-align: left;
+  }
+  .q-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) {
+    .q-options { grid-template-columns: 1fr; }
+    .q-text { font-size: 17px; }
+  }
+  .opt-btn {
+    min-height: 54px;
+    padding: 10px 16px;
+    background: #1c2848;
+    color: var(--text-light);
+    border: 2px solid #2d3e6e;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .opt-btn:hover { background: #253560; border-color: var(--accent-cyan); }
+  .opt-btn.correct { background: #166534 !important; border-color: #22c55e !important; }
+  .opt-btn.wrong { background: #7f1d1d !important; border-color: #ef4444 !important; }
+  .opt-prefix {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  #q-feedback {
+    font-size: 16px;
+    font-weight: 700;
+    min-height: 24px;
+    text-align: center;
+  }
+
+  /* PECAHAN BERTINGKAT */
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 3px;
+    font-size: 0.9em;
+    line-height: 1.1;
+  }
+  .frac-top { border-bottom: 1.5px solid currentColor; padding-bottom: 1px; }
+  .frac-bot { padding-top: 1px; }
+
+  /* TERMINAL PAPAN KEKUNCI BOM (STAGE 4) */
+  #bomb-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(5,8,16,0.94);
+    z-index: 45;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .bomb-card {
+    background: #16203a;
+    border: 3px solid var(--accent-red);
+    border-radius: 12px;
+    padding: 20px 28px;
+    display: flex;
+    gap: 24px;
+    box-shadow: 0 0 30px rgba(255,107,107,0.4);
+    max-width: 650px;
+    width: 90%;
+  }
+  @media (max-width: 640px) {
+    .bomb-card { flex-direction: column; gap: 12px; }
+  }
+  .bomb-sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-right: 1px solid var(--panel-border);
+    padding-right: 16px;
+  }
+  @media (max-width: 640px) {
+    .bomb-sidebar { border-right: none; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; }
+  }
+  .keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    gap: 8px;
+    justify-content: center;
+  }
+  .key-btn {
+    width: 56px;
+    height: 52px;
+    font-size: 22px;
+    font-weight: 700;
+    background: #253358;
+    color: #fff;
+    border: 2px solid #3c4f82;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .key-btn:active { background: #3d538e; }
+  #code-screen {
+    background: #080d1a;
+    border: 2px solid var(--accent-cyan);
+    border-radius: 6px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 28px;
+    letter-spacing: 8px;
+    text-align: center;
+    color: var(--accent-cyan);
+    min-height: 48px;
+  }
+
+  /* KAWALAN SENTUH */
+  #touch-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    pointer-events: none;
+    z-index: 25;
+    display: none;
+    justify-content: space-between;
+    padding: 10px 20px 16px 20px;
+  }
+  .touch-cluster {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    pointer-events: auto;
+  }
+  .t-btn {
+    width: 64px;
+    height: 64px;
+    background: rgba(26, 36, 66, 0.75);
+    border: 2px solid rgba(139, 123, 216, 0.5);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    touch-action: none;
+  }
+  .t-btn:active, .t-btn.active {
+    background: rgba(79, 195, 217, 0.5);
+    border-color: var(--accent-cyan);
+  }
+  .t-btn-fire {
+    background: rgba(238, 82, 83, 0.7);
+    border-color: #ff6b6b;
+    font-size: 15px;
+  }
+  .t-btn-jump {
+    background: rgba(95, 211, 141, 0.7);
+    border-color: #5fd38d;
+    font-size: 15px;
+  }
+
+  /* MOD MELINTANG */
+  #rotate-hint {
+    position: absolute;
+    inset: 0;
+    background: #0d1322;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+  }
+  @media (orientation: portrait) and (max-width: 800px) {
+    #rotate-hint { display: flex; }
+  }
+
+  /* BANNER PEMBERITAHUAN */
+  #banner {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(16, 24, 48, 0.95);
+    border: 2px solid var(--accent-yellow);
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent-yellow);
+    pointer-events: none;
+    z-index: 22;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  #banner.show { opacity: 1; }
+
+  /* PANDUAN AWAL */
+  #tutorial-hint {
+    position: absolute;
+    bottom: 155px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(13, 19, 34, 0.92);
+    border: 2px solid var(--accent-cyan);
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light);
+    pointer-events: auto;
+    z-index: 23;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  #tutorial-hint button {
+    background: none;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-group">
+      <div class="hud-badge"><span class="hud-heart">❤</span> <span id="hud-hp">5/5</span></div>
+      <div class="hud-badge"><span class="hud-ammo">⚡ PELURU:</span> <span id="hud-ammo-val">5/20</span></div>
+      <div class="hud-badge"><span class="hud-cores">💎 TERAS:</span> <span id="hud-cores-val">0/4</span></div>
+      <div class="hud-badge" id="hud-item-badge" style="display:none; color:var(--accent-yellow);">★ <span id="hud-item-name">Kasut Laju</span></div>
+    </div>
+    <div class="hud-group">
+      <div class="hud-badge">⏱ <span id="hud-timer" class="hud-time">95s</span></div>
+      <button class="btn btn-small" id="btn-sound" onclick="Sound.toggleMusic()" title="Muzik">🎵</button>
+      <button class="btn btn-small" id="btn-pause" onclick="Game.togglePause()" title="Jeda">⏸</button>
+    </div>
+  </div>
+
+  <!-- MISI SEMASA (KANAN ATAS) -->
+  <div id="mission-hud">
+    MISI SEMASA: <br><span id="mission-hud-text">Kutip Teras &amp; Buka Pintu!</span>
+  </div>
+
+  <!-- BANNER -->
+  <div id="banner"></div>
+
+  <!-- PANDUAN AWAL STAGE 1 -->
+  <div id="tutorial-hint">
+    <span id="tut-text">Tekan Kanan / D untuk mula berlari!</span>
+    <button onclick="Game.skipHints()">Langkau</button>
+  </div>
+
+  <!-- KAWALAN SENTUH TELEFON -->
+  <div id="touch-controls">
+    <div class="touch-cluster">
+      <div class="t-btn" id="t-left">◀</div>
+      <div class="t-btn" id="t-right">▶</div>
+      <div class="t-btn" id="t-up">▲</div>
+      <div class="t-btn" id="t-down">▼</div>
+    </div>
+    <div class="touch-cluster">
+      <div class="t-btn t-btn-jump" id="t-jump">LOMPAT</div>
+      <div class="t-btn t-btn-fire" id="t-fire">TEMBAK</div>
+    </div>
+  </div>
+
+  <!-- PERINGATAN MOD MELINTANG -->
+  <div id="rotate-hint">
+    <h2>📱 Pusingkan Telefon Anda</h2>
+    <p style="margin-top:12px;">Sila gunakan <b>MOD MELINTANG (LANDSCAPE)</b> untuk paparan permainan terbaik!</p>
+  </div>
+
+  <!-- SKRIN UTAMA (TITLE) -->
+  <div class="overlay-screen active" id="screen-title">
+    <div class="panel-card">
+      <h1 style="font-size:36px;">RATIONAL RUSH</h1>
+      <h2 style="color:var(--accent-yellow);">SAVE MATH CITY</h2>
+      <p style="max-width:540px; color:var(--text-dim);">
+        Aksi Contra 2D berasaskan <b>Nombor Nisbah Tingkatan 1</b>.<br>
+        Tumpaskan Virus X, nyahaktifkan Bom Rational, dan selamatkan Math City!
+      </p>
+      <div style="display:flex; gap:16px; margin-top:10px;">
+        <button class="btn" onclick="Game.showStory()">MULA MISI</button>
+        <button class="btn btn-cyan" onclick="Game.showHowTo()">CARA BERMAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKRIN JALAN CERITA & DISKRIPSI STAGE 1 - 5 -->
+  <div class="overlay-screen" id="screen-story">
+    <div class="panel-card">
+      <h2>🚨 KECEMASAN: MATH CITY DALAM BAHAYA!</h2>
+      <p style="text-align:left; font-size:14.5px; line-height:1.6;">
+        <b>Math City</b> ialah metropolis digital yang dijana sepenuhnya oleh <b>Grid Kuasa Nombor Nisbah</b> (pecahan, perpuluhan, nombor positif dan negatif). Namun, penjahat siber berbahaya bernama <b>Virus X</b> telah menceroboh Menara Pusat! Dia telah mencuri <b>4 Teras Tenaga Utama</b>, memasang <b>Bom Rational</b> bermasa, dan melumpuhkan sistem pertahanan kota.<br><br>
+        Profesor Integer telah melantik anda sebagai <b>Rational Hero</b> dibekalkan <b>5 HP</b>, sut perisai futuristik dan 5 peluru tenaga awal. Misi anda merentasi 5 peringkat kritikal:
+      </p>
+      <div style="display:flex; flex-direction:column; gap:8px; width:100%; text-align:left; font-size:13.5px; background:#141e38; padding:12px 16px; border-radius:8px; border:1px solid var(--panel-border);">
+        <div>🏃 <b>Stage 1 (Larian Virus)</b>: Melarikan diri dari serbuan awal Virus X. Kutip Kasut Laju &amp; Perisai, ambil <b>Teras 1</b> dan selesaikan soalan pintu keluar. <i>(Virus hanya mula mengejar bila anda mula bergerak!)</i></div>
+        <div>⚔️ <b>Stage 2 (Pertarungan Virus)</b>: Lompat ke platform untuk mengambil kotak soalan sendiri! Serang Virus X dan tumpaskannya untuk merampas <b>Teras 2</b>.</div>
+        <div>🚀 <b>Stage 3 (Lumba Hoverboard)</b>: Naiki Hoverboard berkecepatan tinggi! Pintas Virus X yang mengejar dan kutip <b>Teras 3</b> sebelum masa tamat.</div>
+        <div>💣 <b>Stage 4 (Bom Rational)</b>: Selesaikan 4 kotak kod untuk membongkar 4 digit rahsia. Masukkan terus kod di terminal untuk mematikan bom tanpa perlu jawab soalan pintu!</div>
+        <div>👑 <b>Stage 5 (Bos Terakhir &amp; Penjana Math City)</b>: Kalahkan Virus X Mod Gergasi untuk merebut <b>Teras 4</b>. Kemudian, kawal wira untuk meletakkan sendiri ke-4 Teras ke dalam Penjana Utama Math City bagi menyelamatkan kota!</div>
+      </div>
+      <button class="btn btn-green" onclick="Game.startLevel(1)">TERIMA MISI</button>
+    </div>
+  </div>
+
+  <!-- SKRIN CARA BERMAIN & PERATURAN -->
+  <div class="overlay-screen" id="screen-howto">
+    <div class="panel-card" style="max-width:760px; text-align:left;">
+      <h2 style="text-align:center;">🎮 CARA BERMAIN &amp; PERATURAN MISI</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:4px;">
+        <div style="background:#1a2444; padding:12px; border-radius:8px;">
+          <h3 style="color:var(--accent-yellow); margin-bottom:6px;">💻 Kawalan Komputer</h3>
+          <p style="font-size:13.5px; line-height:1.6;">
+            <b>A / D</b> atau <b>Kiri / Kanan</b> : Lari<br>
+            <b>Space</b> : <b>Lompat (Tekan 2x = Double Jump!)</b><br>
+            <b>J</b> : Tembak Pistol (Peluru biasa boleh serang musuh!)<br>
+            <b>W / Atas</b> : Halakan Pistol ke Atas<br>
+            <b>S + Space</b> : Turun platform nipis<br>
+            <b>P</b> : Jeda (Pause) | <b>M</b> : Muzik On/Off
+          </p>
+        </div>
+        <div style="background:#1a2444; padding:12px; border-radius:8px;">
+          <h3 style="color:var(--accent-cyan); margin-bottom:6px;">📱 Kawalan Skrin Sentuh</h3>
+          <p style="font-size:13.5px; line-height:1.6;">
+            Ibu jari kiri: <b>◀ / ▶</b> Lari, <b>▲</b> Arah Atas, <b>▼</b> Turun<br>
+            Ibu jari kanan: <b>LOMPAT (Tekan 2x Double Jump!)</b> &amp; <b>TEMBAK</b><br>
+            Main dalam mod <b>Melintang (Landscape)</b>.
+          </p>
+        </div>
+      </div>
+      <div style="background:#131d36; padding:12px; border-radius:8px; width:100%;">
+        <h4 style="color:var(--accent-green); margin-bottom:4px;">📜 6 PERATURAN MISI PENTING</h4>
+        <ol style="padding-left:18px; font-size:13.5px; line-height:1.5;">
+          <li><b>Kutip 4 Teras Tenaga</b> (Stage 1, 2, 3 dan Stage 5) &amp; masukkan ke Penjana Utama untuk selamatkan Math City!</li>
+          <li><b>Baki Nyawa Dilanjutkan</b>: Nyawa yang tinggal akan dibawa terus ke stage seterusnya (contoh: tamat Stage 1 dengan 2/5 HP, Stage 2 bermula dengan 2/5 HP). Berhati-hati semasa bertarung!</li>
+          <li><b>Batal Soalan &amp; Masa Tamat</b>: Tekan butang <b>BATAL</b> jika belum bersedia. Jika masa 30s tamat, soalan akan ditutup dan anda perlu sentuh kotak semula!</li>
+          <li><b>Stage 2 Sentuh Sendiri</b>: Wira perlu melompat dan menyentuh sendiri kotak ? untuk menjawab.</li>
+          <li><b>Stage 4 Terus Masuk Kod</b>: Selesaikan 4 kotak ? untuk cari 4 digit kod, lalu masukkan kod di terminal tanpa soalan pintu!</li>
+          <li><b>Barang Kekal &amp; Peluru Awal 5/20</b>: Anda bermula dengan 5 peluru. Kasut Laju dan Perisai kekal dibawa ke stage seterusnya!</li>
+        </ol>
+      </div>
+      <div style="text-align:center; width:100%;">
+        <button class="btn" onclick="Game.backToTitle()">KEMBALI KE MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENGENALAN PERINGKAT -->
+  <div class="overlay-screen" id="screen-stage-intro">
+    <div class="panel-card">
+      <h2 id="stage-intro-title">STAGE 1: LARIAN VIRUS</h2>
+      <p id="stage-intro-desc" style="font-size:17px; color:var(--accent-yellow);"></p>
+      <button class="btn btn-green" onclick="Game.beginCurrentStage()">MULA PERINGKAT</button>
+    </div>
+  </div>
+
+  <!-- PERINGKAT SELESAI -->
+  <div class="overlay-screen" id="screen-stage-success">
+    <div class="panel-card">
+      <h2 style="color:var(--accent-green);">PERINGKAT SELESAI!</h2>
+      <p id="stage-success-msg" style="font-size:18px;"></p>
+      <div style="margin-top:10px;">
+        <button class="btn btn-cyan" onclick="Game.nextStage()">PERINGKAT SETERUSNYA ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISI GAGAL (GAME OVER) -->
+  <div class="overlay-screen" id="screen-gameover">
+    <div class="panel-card" style="border-color:var(--accent-red);">
+      <h1 style="color:var(--accent-red); font-size:38px;">MISI GAGAL</h1>
+      <p id="gameover-desc">Nyawa anda telah habis! Ulang semula dari awal untuk menguasai nombor nisbah!</p>
+      <div style="display:flex; gap:16px;">
+        <button class="btn" onclick="Game.startLevel(1)">ULANG MISI</button>
+        <button class="btn btn-cyan" onclick="Game.backToTitle()">MENU UTAMA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JEDA (PAUSE) -->
+  <div class="overlay-screen" id="screen-pause">
+    <div class="panel-card">
+      <h2>PERMAINAN DIJEDA</h2>
+      <p>Tarik nafas seketika, hero!</p>
+      <div style="display:flex; flex-direction:column; gap:12px; width:220px;">
+        <button class="btn btn-cyan" onclick="Game.togglePause()">SAMBUNG</button>
+        <button class="btn btn-green" onclick="Game.restartCurrentStage()">CUBA SEMULA</button>
+        <button class="btn" onclick="Sound.toggleMusic()" id="btn-pause-music">MUZIK: ON</button>
+        <button class="btn" onclick="Game.backToTitle()">MENU UTAMA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEMENANGAN AKHIR (VICTORY) -->
+  <div class="overlay-screen" id="screen-victory">
+    <div class="panel-card" style="max-width:700px;">
+      <h1 style="color:var(--accent-green);">🏆 MISI SELESAI!</h1>
+      <h2 style="color:var(--accent-yellow);">MATH CITY TELAH DISELAMATKAN!</h2>
+      <p style="font-size:16px;">
+        Semua <b>4 Teras Tenaga</b> telah berjaya dimasukkan ke dalam Penjana Utama! Grid kuasa Math City kini beroperasi pada tahap 100%!
+      </p>
+      <div style="background:#182548; padding:16px; border-radius:8px; width:100%; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:15px;">
+        <div>Pangkat: <b id="vic-rank" style="color:var(--accent-yellow);">RATIONAL MASTER</b></div>
+        <div>Skor Keseluruhan: <b id="vic-score">0</b></div>
+        <div>Soalan Selesai: <b id="vic-q-solved">0</b></div>
+        <div>Kesilapan: <b id="vic-mistakes">0</b></div>
+        <div>Baki Nyawa: <b id="vic-hp">5/5</b></div>
+        <div>Teras Tenaga: <b style="color:#38ef7d;">4/4 DIJANA PENUH!</b></div>
+      </div>
+      <div style="display:flex; gap:16px;">
+        <button class="btn btn-green" onclick="Game.startLevel(1)">MAIN SEMULA</button>
+        <button class="btn" onclick="Game.backToTitle()">MENU UTAMA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP SOALAN (DENGAN BUTANG BATAL) -->
+  <div id="question-modal">
+    <div id="question-card">
+      <div class="q-header">
+        <span class="q-story" id="q-story-text">Cabaran Nombor Nisbah!</span>
+        <div class="q-timer-group">
+          <span class="q-timer" id="q-timer-val">⏱ 30s</span>
+          <button class="btn btn-cancel" onclick="Game.cancelQuestion()">✕ BATAL</button>
+        </div>
+      </div>
+      <div class="q-text" id="q-text-body">Soalan</div>
+      <div class="q-options" id="q-options-container"></div>
+      <div id="q-feedback"></div>
+    </div>
+  </div>
+
+  <!-- TERMINAL PAPAN KEKUNCI BOM (STAGE 4) -->
+  <div id="bomb-modal">
+    <div class="bomb-card">
+      <div class="bomb-sidebar">
+        <h3 style="color:var(--accent-red);">💣 TERMINAL BOM</h3>
+        <p style="font-size:13px; color:var(--text-dim);">Masukkan 4 digit kod yang dibongkar untuk nyahaktifkan bom dan buka pintu ke Stage 5!</p>
+        <div style="background:#0b1120; padding:8px; border-radius:6px; font-size:14px;">
+          DIGIT DIPEROLEH: <br>
+          <b id="bomb-revealed-code" style="color:var(--accent-yellow); font-size:18px; letter-spacing:4px;">_ _ _ _</b>
+        </div>
+        <p style="font-size:12px; color:var(--accent-yellow);">Petua: Tiada soalan pintu lagi. Masukkan kod dengan tepat!</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <div id="code-screen">----</div>
+        <div class="keypad-grid">
+          <button class="key-btn" onclick="Game.keypadInput('1')">1</button>
+          <button class="key-btn" onclick="Game.keypadInput('2')">2</button>
+          <button class="key-btn" onclick="Game.keypadInput('3')">3</button>
+          <button class="key-btn" onclick="Game.keypadInput('4')">4</button>
+          <button class="key-btn" onclick="Game.keypadInput('5')">5</button>
+          <button class="key-btn" onclick="Game.keypadInput('6')">6</button>
+          <button class="key-btn" onclick="Game.keypadInput('7')">7</button>
+          <button class="key-btn" onclick="Game.keypadInput('8')">8</button>
+          <button class="key-btn" onclick="Game.keypadInput('9')">9</button>
+          <button class="key-btn" style="color:var(--accent-red);" onclick="Game.keypadClear()">C</button>
+          <button class="key-btn" onclick="Game.keypadInput('0')">0</button>
+          <button class="key-btn" style="color:var(--accent-green);" onclick="Game.keypadEnter()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ==========================================================================
+   QUESTION_BANK
+   Matematik Tingkatan 1 - Bab 1.5: Nombor Nisbah
+   ========================================================================== */
+const QUESTION_BANK = {
+  stage1: [
+    {
+      story: "Virus X melepaskan gelombang ais! Cairkan laluan.",
+      q: "Tukarkan pecahan 1/2 kepada perpuluhan.",
+      options: ["1.2", "0.25", "0.5", "0.2"],
+      answer: 2,
+      digit: "3"
+    },
+    {
+      story: "Kestabilan jambatan digital memerlukan pengiraan suhu.",
+      q: "Nilaikan: −3.5 + 2",
+      options: ["5.5", "−5.5", "1.5", "−1.5"],
+      answer: 3,
+      digit: "8"
+    },
+    {
+      story: "Pintu pagar utama Zon 1 terkunci dengan kod nisbah!",
+      q: "Antara berikut, yang manakah nombor nisbah positif?",
+      options: ["−1.2", "−2/3", "−0.5", "3/4"],
+      answer: 3,
+      digit: "5"
+    }
+  ],
+
+  stage2: [
+    {
+      story: "Lompat ke platform dan sentuh kotak untuk jana bekalan peluru!",
+      q: "Kedudukan penyelam A ialah −12.5m. Penyelam B berada pada 1.4 kali kedalaman A. Berapakah kedudukan B?",
+      options: ["−17.5m", "−13.9m", "−15.0m", "−8.9m"],
+      answer: 0,
+      digit: "4"
+    },
+    {
+      story: "Isi semula kelongsong peluru tenaga nisbah!",
+      q: "Sebuah bekas ada 2.4L air. Amin minum 1/3 daripadanya dan tumpah 0.5L. Baki air yang tinggal?",
+      options: ["1.3L", "1.1L", "0.8L", "1.6L"],
+      answer: 1,
+      digit: "2"
+    },
+    {
+      story: "Dapatkan Pistol Kuasa Emas untuk serangan berganda!",
+      q: "Suhu awal −3.4°C, turun 1.8°C dan naik 5½°C. Berapakah suhu akhir makmal?",
+      options: ["−10.7°C", "3.9°C", "−0.3°C", "0.3°C"],
+      answer: 3,
+      digit: "9"
+    },
+    {
+      story: "Selaraskan frekuensi pistol tenaga nisbah!",
+      q: "Hitung nilai bagi: −0.75 + (3/4 ÷ 0.5)",
+      options: ["0.75", "1.5", "−0.75", "0.5"],
+      answer: 0,
+      digit: "6"
+    }
+  ],
+
+  stage3: [
+    {
+      story: "Aktifkan enjin Hoverboard dengan susunan nombor nisbah!",
+      q: "Susun nombor nisbah berikut mengikut tertib menaik: −0.6, 1/2, −1.2, 0",
+      options: [
+        "−0.6, −1.2, 0, 1/2",
+        "1/2, 0, −0.6, −1.2",
+        "−1.2, −0.6, 0, 1/2",
+        "−1.2, −0.6, 1/2, 0"
+      ],
+      answer: 2,
+      digit: "7"
+    },
+    {
+      story: "Tingkatkan kelajuan hoverboard untuk memintas Virus X!",
+      q: "Nilaikan: 3/4 × (−0.8)",
+      options: ["−0.8", "−0.6", "−1.2", "0.6"],
+      answer: 1,
+      digit: "1"
+    },
+    {
+      story: "Pintu Pagar Kelajuan Math City menghadang laluan!",
+      q: "Nilaikan: −2.5 + 1½",
+      options: ["−1.5", "−4", "1", "−1"],
+      answer: 3,
+      digit: "6"
+    }
+  ],
+
+  stage4: [
+    {
+      story: "Bongkah kod 1: Nyahsulit digit pertama bom!",
+      q: "Tukarkan 0.4 kepada nombor nisbah dalam bentuk pecahan termudah p/q.",
+      options: ["4/10", "4/5", "2/5", "1/4"],
+      answer: 2,
+      digit: "4"
+    },
+    {
+      story: "Bongkah kod 2: Kenal pasti sifat nombor bukan nisbah.",
+      q: "Antara berikut, yang manakah BUKAN nombor nisbah?",
+      options: ["√2", "−5", "0.75", "1½"],
+      answer: 0,
+      digit: "7"
+    },
+    {
+      story: "Bongkah kod 3: Imbangi litar pengiraan Rational Bomb.",
+      q: "Nilaikan: (−0.3) × (−0.3)",
+      options: ["−0.9", "0.09", "−0.09", "0.9"],
+      answer: 1,
+      digit: "2"
+    },
+    {
+      story: "Bongkah kod 4: Digit terakhir untuk terminal keselamatan!",
+      q: "Hitung: 1/4 − (−0.75)",
+      options: ["−0.5", "0.5", "1.0", "−1.0"],
+      answer: 2,
+      digit: "9"
+    }
+  ],
+
+  finalBoss: [
+    {
+      story: "Virus X mengaktifkan Mod Gergasi! Jana peluru Kuasa Emas.",
+      q: "Nilaikan: −1.6 ÷ 0.4",
+      options: ["−4", "4", "−0.4", "−40"],
+      answer: 0,
+      digit: "8"
+    },
+    {
+      story: "Serangan bebola virus! Jana peluru Kuasa Emas.",
+      q: "Cari nilai bagi: 2/5 + (−0.6)",
+      options: ["−0.2", "0.2", "−1.0", "0.8"],
+      answer: 0,
+      digit: "3"
+    },
+    {
+      story: "Serang titik kelemahan Virus X!",
+      q: "Selesaikan: (−1/2) × 4 + 3",
+      options: ["−1", "1", "5", "−5"],
+      answer: 1,
+      digit: "5"
+    },
+    {
+      story: "Virus X semakin lemah! Gandakan kuasa tembakan.",
+      q: "Antara nombor berikut, yang manakah nilainya paling kecil?",
+      options: ["−0.85", "−1.2", "−0.25", "0"],
+      answer: 1,
+      digit: "6"
+    },
+    {
+      story: "TEMBAKAN TERAKHIR! Tumpaskan Virus X!",
+      q: "Nilaikan: 0.8 − 1½",
+      options: ["−0.7", "0.7", "−2.3", "−0.3"],
+      answer: 0,
+      digit: "1"
+    }
+  ]
+};
+
+/* ==========================================================================
+   AUDIO SYNTHESIZER (WEB AUDIO API)
+   ========================================================================== */
+const Sound = {
+  ctx: null,
+  musicGain: null,
+  sfxGain: null,
+  isMuted: false,
+  musicRunning: false,
+  melodyStep: 0,
+  timerId: null,
+
+  init() {
+    if (this.ctx) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+      this.sfxGain = this.ctx.createGain();
+      this.sfxGain.gain.value = 0.25;
+      this.sfxGain.connect(this.ctx.destination);
+
+      this.musicGain = this.ctx.createGain();
+      this.musicGain.gain.value = 0.15;
+      this.musicGain.connect(this.ctx.destination);
+    } catch(e) { console.warn("Audio unavailable", e); }
+  },
+
+  playTone(freq, type, duration, gainVal = 0.3) {
+    if (!this.ctx || this.isMuted) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      g.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      osc.connect(g);
+      g.connect(this.sfxGain);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  },
+
+  shoot(isPower = false) {
+    if (isPower) {
+      this.playTone(580, 'triangle', 0.18, 0.4);
+      setTimeout(() => this.playTone(880, 'sine', 0.2, 0.35), 50);
+    } else {
+      this.playTone(320, 'square', 0.08, 0.2);
+    }
+  },
+
+  jump(isDouble = false) {
+    if (!this.ctx || this.isMuted) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sine';
+      const startF = isDouble ? 260 : 180;
+      const endF = isDouble ? 560 : 420;
+      osc.frequency.setValueAtTime(startF, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(endF, this.ctx.currentTime + 0.14);
+      g.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
+      osc.connect(g);
+      g.connect(this.sfxGain);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.15);
+    } catch(e) {}
+  },
+
+  enemyShot() { this.playTone(180, 'sawtooth', 0.1, 0.18); },
+  hit() { this.playTone(90, 'square', 0.25, 0.35); },
+  critical() {
+    this.playTone(400, 'sawtooth', 0.1, 0.4);
+    setTimeout(() => this.playTone(700, 'square', 0.2, 0.45), 90);
+  },
+  boxOpen() {
+    this.playTone(523, 'triangle', 0.1, 0.3);
+    setTimeout(() => this.playTone(659, 'triangle', 0.1, 0.3), 80);
+    setTimeout(() => this.playTone(784, 'triangle', 0.15, 0.3), 160);
+  },
+  correct() {
+    this.playTone(440, 'sine', 0.1, 0.3);
+    setTimeout(() => this.playTone(554, 'sine', 0.1, 0.3), 90);
+    setTimeout(() => this.playTone(659, 'sine', 0.2, 0.3), 180);
+  },
+  coreChime() {
+    this.playTone(523.25, 'triangle', 0.15, 0.35);
+    setTimeout(() => this.playTone(659.25, 'triangle', 0.15, 0.35), 90);
+    setTimeout(() => this.playTone(783.99, 'triangle', 0.15, 0.35), 180);
+    setTimeout(() => this.playTone(1046.50, 'sine', 0.35, 0.4), 270);
+  },
+  wrong() {
+    this.playTone(220, 'sawtooth', 0.15, 0.35);
+    setTimeout(() => this.playTone(170, 'sawtooth', 0.25, 0.35), 140);
+  },
+  beep() { this.playTone(600, 'sine', 0.06, 0.2); },
+  unlock() {
+    this.playTone(520, 'triangle', 0.12, 0.35);
+    setTimeout(() => this.playTone(780, 'triangle', 0.25, 0.35), 120);
+  },
+  gameover() {
+    this.playTone(200, 'sawtooth', 0.3, 0.4);
+    setTimeout(() => this.playTone(150, 'sawtooth', 0.3, 0.4), 250);
+    setTimeout(() => this.playTone(100, 'sawtooth', 0.5, 0.4), 500);
+  },
+  fanfare() {
+    const notes = [440, 440, 440, 554, 659, 880];
+    const times = [0, 120, 240, 360, 480, 640];
+    notes.forEach((n, i) => {
+      setTimeout(() => this.playTone(n, 'triangle', 0.22, 0.35), times[i]);
+    });
+  },
+
+  startMusic() {
+    if (this.musicRunning || !this.ctx) return;
+    this.musicRunning = true;
+    const tempo = 135;
+    const interval = (60 / tempo) * 500;
+    const bass = [110, 110, 130, 110, 98, 98, 123, 98];
+    const lead = [440, 0, 523, 587, 659, 0, 587, 523, 392, 0, 440, 523, 493, 0, 440, 392];
+
+    this.timerId = setInterval(() => {
+      if (this.isMuted || !this.musicRunning || !this.ctx) return;
+      const bFreq = bass[this.melodyStep % bass.length];
+      const lFreq = lead[this.melodyStep % lead.length];
+      const now = this.ctx.currentTime;
+
+      if (bFreq) {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(bFreq, now);
+        g.gain.setValueAtTime(0.12, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(g);
+        g.connect(this.musicGain);
+        osc.start();
+        osc.stop(now + 0.2);
+      }
+      if (lFreq) {
+        const osc2 = this.ctx.createOscillator();
+        const g2 = this.ctx.createGain();
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(lFreq, now);
+        g2.gain.setValueAtTime(0.05, now);
+        g2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc2.connect(g2);
+        g2.connect(this.musicGain);
+        osc2.start();
+        osc2.stop(now + 0.16);
+      }
+      this.melodyStep++;
+    }, interval);
+  },
+
+  stopMusic() {
+    if (this.timerId) clearInterval(this.timerId);
+    this.musicRunning = false;
+  },
+
+  toggleMusic() {
+    this.isMuted = !this.isMuted;
+    const btn1 = document.getElementById('btn-sound');
+    const btn2 = document.getElementById('btn-pause-music');
+    if (btn1) btn1.textContent = this.isMuted ? '🔇' : '🎵';
+    if (btn2) btn2.textContent = this.isMuted ? 'MUZIK: OFF' : 'MUZIK: ON';
+  }
+};
+
+/* ==========================================================================
+   GAME ENGINE & STATE MACHINE (DENGAN NYAWA KEKAL DILANJUTKAN)
+   ========================================================================== */
+const Canvas = document.getElementById('gameCanvas');
+const ctx = Canvas.getContext('2d');
+
+const Game = {
+  state: 'TITLE', // 'TITLE','STORY','HOWTO','INTRO','PLAYING','PAUSED','QUESTION','KEYPAD','INSERTION','GAMEOVER','VICTORY','STAGE_SUCCESS'
+  stage: 1,
+  timeRemaining: 95,
+  stageTimerId: null,
+  questionCooldown: 0,
+  
+  // Status wira kekal (Nyawa, Peluru, Kasut Laju, Perisai dilanjutkan!)
+  inventory: {
+    speedBoost: false,
+    hasShield: false,
+    ammo: 5,
+    powerBullets: 0,
+    hp: 5 // Nyawa dikekalkan ke stage seterusnya!
+  },
+
+  // Rekod skor & teras
+  correctAnswersCount: 0,
+  mistakesCount: 0,
+  energyCoresRecovered: 0,
+  bestScore: 0,
+
+  // Sistem soalan & kod bom
+  currentQuestion: null,
+  currentBoxObj: null,
+  questionTimer: 30,
+  questionTimerId: null,
+  bombEnteredCode: "",
+  bombTargetCode: "4729",
+  bombRevealedDigits: ["_", "_", "_", "_"],
+
+  // Penjana Utama Animasi (Akhir Stage 5)
+  generator: null,
+  insertionStep: 0,
+
+  // Kamera & Dunia
+  cameraX: 0,
+  worldWidth: 2600,
+  worldHeight: 540,
+  gravity: 0.65,
+
+  // Entiti
+  player: null,
+  boss: null,
+  chasingVirus: null,
+  platforms: [],
+  crates: [],
+  gate: null,
+  enemies: [],
+  playerBullets: [],
+  enemyBullets: [],
+  particles: [],
+  energyCores: [],
+  tutorialStep: 0,
+
+  // Input
+  keys: {},
+  prevKeys: {},
+
+  init() {
+    this.loadBestScore();
+    this.setupInput();
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      document.getElementById('touch-controls').style.display = 'flex';
+    }
+  },
+
+  loadBestScore() {
+    try {
+      const s = localStorage.getItem('rational_rush_best');
+      this.bestScore = s ? parseInt(s, 10) : 0;
+    } catch(e) { this.bestScore = 0; }
+  },
+
+  saveBestScore(val) {
+    if (val > this.bestScore) {
+      this.bestScore = val;
+      try { localStorage.setItem('rational_rush_best', val.toString()); } catch(e){}
+    }
+  },
+
+  resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const aspect = 960 / 540;
+    let canvasW = w;
+    let canvasH = w / aspect;
+    if (canvasH > h) {
+      canvasH = h;
+      canvasW = h * aspect;
+    }
+    Canvas.style.width = `${canvasW}px`;
+    Canvas.style.height = `${canvasH}px`;
+  },
+
+  hideAllScreens() {
+    document.querySelectorAll('.overlay-screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('question-modal').style.display = 'none';
+    document.getElementById('bomb-modal').style.display = 'none';
+  },
+
+  showTitle() {
+    this.state = 'TITLE';
+    this.stopStage();
+    this.player = null;
+    this.hideAllScreens();
+    document.getElementById('screen-title').classList.add('active');
+  },
+
+  backToTitle() {
+    this.showTitle();
+  },
+
+  showStory() {
+    Sound.init();
+    Sound.startMusic();
+    this.state = 'STORY';
+    this.hideAllScreens();
+    document.getElementById('screen-story').classList.add('active');
+  },
+
+  showHowTo() {
+    this.state = 'HOWTO';
+    this.hideAllScreens();
+    document.getElementById('screen-howto').classList.add('active');
+  },
+
+  startLevel(lvl) {
+    Sound.init();
+    Sound.startMusic();
+    this.stage = lvl;
+    if (lvl === 1) {
+      this.correctAnswersCount = 0;
+      this.mistakesCount = 0;
+      this.energyCoresRecovered = 0;
+      // Bermula bersih dengan 5 HP & 5 peluru di Stage 1!
+      this.inventory = {
+        speedBoost: false,
+        hasShield: false,
+        ammo: 5,
+        powerBullets: 0,
+        hp: 5
+      };
+    }
+    const titles = [
+      "",
+      "STAGE 1: LARIAN VIRUS",
+      "STAGE 2: PERTARUNGAN VIRUS",
+      "STAGE 3: LUMBA HOVERBOARD",
+      "STAGE 4: BOM RATIONAL",
+      "STAGE 5: BOS TERAKHIR & PENJANA"
+    ];
+    const descs = [
+      "",
+      "Virus X bersedia di belakang! Kutip Kasut Laju, Perisai, dan Teras 1 di depan pintu! (Virus hanya mengejar selepas anda mula berlari!)",
+      "Pertempuran Bos Zon 2! Lompat sendiri ke platform untuk mengambil kotak soalan & dapatkan Teras 2!",
+      "Lumba Hoverboard! Pintas Virus X dan kutip Teras 3 sebelum masa tamat!",
+      "Bom Rational sedang berdetik! Selesaikan 4 kotak kod & masukkan kod di terminal tanpa soalan pintu!",
+      "Tumpaskan Virus X, kutip Teras 4, dan gerakkan wira untuk memasukkan 4 Teras ke dalam Penjana Utama!"
+    ];
+
+    this.state = 'INTRO';
+    document.getElementById('stage-intro-title').textContent = titles[lvl];
+    document.getElementById('stage-intro-desc').textContent = descs[lvl];
+    this.hideAllScreens();
+    document.getElementById('screen-stage-intro').classList.add('active');
+  },
+
+  beginCurrentStage() {
+    this.hideAllScreens();
+    this.loadStage(this.stage);
+  },
+
+  restartCurrentStage() {
+    this.hideAllScreens();
+    this.loadStage(this.stage);
+  },
+
+  nextStage() {
+    // Simpan semua barang DAN BAKI NYAWA pemain sebelum ke stage seterusnya!
+    if (this.player) {
+      this.inventory.speedBoost = this.player.speedBoost;
+      this.inventory.hasShield = this.player.hasShield;
+      this.inventory.ammo = Math.max(5, this.player.ammo);
+      this.inventory.powerBullets = this.player.powerBullets;
+      this.inventory.hp = Math.max(1, this.player.hp); // Nyawa dilanjutkan ke stage seterusnya!
+    }
+
+    if (this.stage < 5) {
+      this.startLevel(this.stage + 1);
+    } else {
+      this.showVictory();
+    }
+  },
+
+  showVictory() {
+    this.state = 'VICTORY';
+    this.stopStage();
+    Sound.fanfare();
+    this.hideAllScreens();
+    document.getElementById('screen-victory').classList.add('active');
+    
+    const rank = this.mistakesCount <= 3 ? "RATIONAL MASTER" : "RATIONAL HERO";
+    const hpLeft = this.player ? Math.max(0, this.player.hp) : (this.inventory.hp || 5);
+    const finalScore = (this.correctAnswersCount * 250) + (this.energyCoresRecovered * 500) + (hpLeft * 100) - (this.mistakesCount * 50);
+    const scoreSafe = Math.max(0, finalScore);
+    this.saveBestScore(scoreSafe);
+
+    document.getElementById('vic-rank').textContent = rank;
+    document.getElementById('vic-score').textContent = scoreSafe;
+    document.getElementById('vic-q-solved').textContent = this.correctAnswersCount;
+    document.getElementById('vic-mistakes').textContent = this.mistakesCount;
+    document.getElementById('vic-hp').textContent = `${hpLeft}/5`;
+  },
+
+  gameOver(reason) {
+    this.state = 'GAMEOVER';
+    this.stopStage();
+    Sound.gameover();
+    this.hideAllScreens();
+    document.getElementById('gameover-desc').textContent = reason || "Nyawa anda telah habis! Ulang semula dari awal untuk menguasai nombor nisbah!";
+    document.getElementById('screen-gameover').classList.add('active');
+  },
+
+  togglePause() {
+    if (this.state !== 'PLAYING' && this.state !== 'PAUSED') return;
+    const pauseScrn = document.getElementById('screen-pause');
+    if (this.state === 'PLAYING') {
+      this.state = 'PAUSED';
+      pauseScrn.classList.add('active');
+    } else {
+      this.state = 'PLAYING';
+      pauseScrn.classList.remove('active');
+    }
+  },
+
+  showBanner(txt, duration = 2500) {
+    const b = document.getElementById('banner');
+    b.textContent = txt;
+    b.classList.add('show');
+    clearTimeout(b._t);
+    b._t = setTimeout(() => b.classList.remove('show'), duration);
+  },
+
+  setMissionText(txt) {
+    document.getElementById('mission-hud-text').innerHTML = txt;
+  },
+
+  skipHints() {
+    document.getElementById('tutorial-hint').style.display = 'none';
+    this.tutorialStep = 999;
+  },
+
+  loadStage(num) {
+    this.stopStage();
+    this.stage = num;
+    this.state = 'PLAYING';
+    this.cameraX = 0;
+    this.questionCooldown = 0;
+    this.playerBullets = [];
+    this.enemyBullets = [];
+    this.particles = [];
+    this.energyCores = [];
+    this.enemies = [];
+    this.crates = [];
+    this.platforms = [];
+    this.gate = null;
+    this.boss = null;
+    this.chasingVirus = null;
+    this.generator = null;
+
+    const isHover = (num === 3);
+    const startingAmmo = (num === 1) ? 5 : Math.max(5, this.inventory.ammo);
+    
+    // NYAWA DILANJUTKAN: Stage 1 = 5 HP, stage seterusnya mengekalkan baki nyawa yang dibawa!
+    const startingHp = (num === 1) ? 5 : (this.inventory.hp !== undefined ? this.inventory.hp : 5);
+    
+    this.player = new Player(60, 360, isHover, startingAmmo, startingHp);
+
+    // Kekalkan barang
+    if (this.inventory.speedBoost) {
+      this.player.speedBoost = true;
+      this.player.maxSpeed = 6.2;
+    }
+    if (this.inventory.hasShield) {
+      this.player.hasShield = true;
+    }
+    if (this.inventory.powerBullets > 0) {
+      this.player.powerBullets = this.inventory.powerBullets;
+    }
+
+    if (num === 1) this.timeRemaining = 95;
+    else if (num === 2) this.timeRemaining = 120;
+    else if (num === 3) this.timeRemaining = 80;
+    else if (num === 4) this.timeRemaining = 120;
+    else if (num === 5) this.timeRemaining = 150;
+
+    if (num === 1) this.setupStage1();
+    else if (num === 2) this.setupStage2();
+    else if (num === 3) this.setupStage3();
+    else if (num === 4) this.setupStage4();
+    else if (num === 5) this.setupStage5();
+
+    this.startStageTimer();
+    this.updateHUD();
+
+    if (num === 1) {
+      this.tutorialStep = 1;
+      this.updateTutorialHint("Tekan Kanan / D untuk mula berlari!");
+    } else {
+      document.getElementById('tutorial-hint').style.display = 'none';
+    }
+  },
+
+  updateTutorialHint(text) {
+    if (this.tutorialStep >= 999) return;
+    const el = document.getElementById('tutorial-hint');
+    document.getElementById('tut-text').textContent = text;
+    el.style.display = 'flex';
+  },
+
+  stopStage() {
+    if (this.stageTimerId) clearInterval(this.stageTimerId);
+    if (this.questionTimerId) clearInterval(this.questionTimerId);
+  },
+
+  startStageTimer() {
+    if (this.stageTimerId) clearInterval(this.stageTimerId);
+    this.stageTimerId = setInterval(() => {
+      if (this.state !== 'PLAYING') return;
+      this.timeRemaining--;
+      this.updateHUD();
+      if (this.timeRemaining <= 0) {
+        if (this.stage === 4) this.gameOver("BOOM! Bom Rational telah meletup!");
+        else this.gameOver("MASA TAMAT! Math City kehabisan kuasa!");
+      }
+    }, 1000);
+  },
+
+  // ------------------------------------------------------------------------
+  // GEOMETRI PERINGKAT
+  // ------------------------------------------------------------------------
+  setupStage1() {
+    this.worldWidth = 2400;
+    this.setMissionText("Kutip Kotak ?, Ambil <b>Teras 1</b> &amp; Buka Pintu");
+
+    this.platforms = [
+      new Platform(0, 460, 560, 80),
+      new Platform(640, 460, 560, 80),
+      new Platform(1280, 460, 560, 80),
+      new Platform(1920, 460, 480, 80),
+      new Platform(280, 340, 160, 18, true),
+      new Platform(520, 270, 180, 18, true),
+      new Platform(920, 330, 180, 18, true),
+      new Platform(1440, 310, 180, 18, true),
+      new Platform(1700, 250, 160, 18, true)
+    ];
+
+    this.crates = [
+      new Crate(350, 260, 0, 'speed', "Kasut Laju"),
+      new Crate(1520, 230, 1, 'shield', "Perisai Tenaga")
+    ];
+
+    this.energyCores = [
+      new EnergyCore(2060, 390, 1)
+    ];
+
+    this.gate = new Gate(2180, 330, 2);
+
+    this.enemies = [
+      new Enemy(780, 400, 'drone'),
+      new Enemy(1360, 400, 'drone'),
+      new Enemy(1860, 400, 'virus')
+    ];
+
+    this.chasingVirus = new ChasingVirus(-320, 120, 1.25);
+  },
+
+  setupStage2() {
+    this.worldWidth = 960;
+    this.setMissionText("Lompat & sentuh kotak ? untuk peluru. Tewaskan Virus X!");
+
+    this.platforms = [
+      new Platform(0, 460, 960, 80),
+      new Platform(120, 340, 190, 18, true),
+      new Platform(650, 340, 190, 18, true),
+      new Platform(385, 230, 190, 18, true)
+    ];
+
+    this.boss = new Boss(680, 220, 8, false);
+
+    // Kotak Stage 2: Hero mesti melompat dan menyentuh sendiri (touchOnly)!
+    this.crates = [
+      new Crate(180, 270, 0, 'power', "Pistol Kuasa & Peluru", true),
+      new Crate(445, 160, 1, 'power', "Pistol Kuasa & Peluru", true),
+      new Crate(710, 270, 2, 'power', "Pistol Kuasa & Peluru", true)
+    ];
+  },
+
+  setupStage3() {
+    this.worldWidth = 2600;
+    this.setMissionText("Kutip <b>Teras 3</b> &amp; mara ke pintu!");
+
+    this.platforms = [
+      new Platform(0, 460, 600, 80),
+      new Platform(680, 460, 600, 80),
+      new Platform(1360, 460, 580, 80),
+      new Platform(2000, 460, 600, 80),
+      new Platform(320, 330, 200, 18, true),
+      new Platform(860, 290, 220, 18, true),
+      new Platform(1500, 300, 220, 18, true)
+    ];
+
+    this.crates = [
+      new Crate(400, 250, 0, 'boost', "Penggalak Laju"),
+      new Crate(1580, 230, 1, 'boost', "Penggalak Laju")
+    ];
+
+    this.energyCores = [
+      new EnergyCore(2320, 390, 3)
+    ];
+
+    this.gate = new Gate(2450, 330, 2);
+
+    this.enemies = [
+      new Enemy(800, 400, 'drone'),
+      new Enemy(1480, 400, 'virus'),
+      new Enemy(2100, 400, 'drone')
+    ];
+
+    this.chasingVirus = new ChasingVirus(-180, 340, 2.1, true);
+  },
+
+  setupStage4() {
+    this.worldWidth = 2700;
+    this.setMissionText("Kumpul 4 digit &amp; masukkan kod di terminal!");
+
+    const qList = QUESTION_BANK.stage4;
+    this.bombTargetCode = (qList[0].digit || "4") + (qList[1].digit || "7") + (qList[2].digit || "2") + (qList[3].digit || "9");
+    this.bombRevealedDigits = ["_", "_", "_", "_"];
+    this.updateBombHUD();
+
+    this.platforms = [
+      new Platform(0, 460, 550, 80),
+      new Platform(620, 460, 550, 80),
+      new Platform(1240, 460, 550, 80),
+      new Platform(1860, 460, 840, 80),
+      new Platform(260, 320, 180, 18, true),
+      new Platform(780, 290, 180, 18, true),
+      new Platform(1400, 300, 180, 18, true),
+      new Platform(1980, 300, 180, 18, true)
+    ];
+
+    this.crates = [
+      new Crate(320, 240, 0, 'digit', `Digit 1: ${this.bombTargetCode[0]}`),
+      new Crate(840, 220, 1, 'digit', `Digit 2: ${this.bombTargetCode[1]}`),
+      new Crate(1460, 230, 2, 'digit', `Digit 3: ${this.bombTargetCode[2]}`),
+      new Crate(2040, 230, 3, 'digit', `Digit 4: ${this.bombTargetCode[3]}`)
+    ];
+
+    this.gate = new Gate(2500, 330, -1, true);
+
+    this.enemies = [
+      new Enemy(740, 400, 'virus'),
+      new Enemy(1360, 400, 'drone'),
+      new Enemy(2180, 400, 'virus')
+    ];
+  },
+
+  setupStage5() {
+    this.worldWidth = 1100;
+    this.setMissionText("Tumpaskan Virus X untuk mendapatkan <b>Teras 4</b>!");
+
+    this.platforms = [
+      new Platform(0, 470, 1100, 70),
+      new Platform(120, 350, 190, 18, true),
+      new Platform(790, 350, 190, 18, true),
+      new Platform(450, 240, 200, 18, true)
+    ];
+
+    this.boss = new Boss(800, 200, 8, true);
+    this.crates = [
+      new Crate(520, 170, 0, 'power5', "5 Peluru Emas")
+    ];
+  },
+
+  updateBombHUD() {
+    const el = document.getElementById('bomb-revealed-code');
+    if (el && this.bombRevealedDigits) {
+      el.textContent = this.bombRevealedDigits.join(' ');
+    }
+  },
+
+  // ------------------------------------------------------------------------
+  // PENGURUSAN SOALAN, BATAL, & MASA TAMAT
+  // ------------------------------------------------------------------------
+  triggerQuestion(qIndex, boxObj = null, isGate = false) {
+    if (this.state !== 'PLAYING' || this.questionCooldown > 0) return;
+    this.state = 'QUESTION';
+    this.currentBoxObj = boxObj;
+
+    let bank;
+    if (this.stage === 1) bank = QUESTION_BANK.stage1;
+    else if (this.stage === 2) bank = QUESTION_BANK.stage2;
+    else if (this.stage === 3) bank = QUESTION_BANK.stage3;
+    else if (this.stage === 4) bank = QUESTION_BANK.stage4;
+    else bank = QUESTION_BANK.finalBoss;
+
+    const qData = bank[qIndex % bank.length];
+    this.currentQuestion = { ...qData, qIndex, isGate };
+
+    const modal = document.getElementById('question-modal');
+    document.getElementById('q-story-text').textContent = qData.story || "Cabaran Nombor Nisbah!";
+    document.getElementById('q-text-body').innerHTML = this.formatMath(qData.q);
+
+    const optsContainer = document.getElementById('q-options-container');
+    optsContainer.innerHTML = '';
+    const letters = ['A', 'B', 'C', 'D'];
+
+    qData.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerHTML = `<span class="opt-prefix">${letters[idx]}</span> <span>${this.formatMath(opt)}</span>`;
+      btn.onclick = () => this.handleAnswer(idx, btn);
+      optsContainer.appendChild(btn);
+    });
+
+    document.getElementById('q-feedback').textContent = '';
+    modal.style.display = 'flex';
+
+    this.questionTimer = 30;
+    document.getElementById('q-timer-val').textContent = `⏱ ${this.questionTimer}s`;
+    if (this.questionTimerId) clearInterval(this.questionTimerId);
+    this.questionTimerId = setInterval(() => {
+      this.questionTimer--;
+      document.getElementById('q-timer-val').textContent = `⏱ ${this.questionTimer}s`;
+      if (this.questionTimer <= 0) {
+        clearInterval(this.questionTimerId);
+        Game.onQuestionTimeout();
+      }
+    }, 1000);
+
+    Sound.boxOpen();
+  },
+
+  // BUTANG BATAL SOALAN (TIDAK PENALTI HP)
+  cancelQuestion() {
+    if (this.questionTimerId) clearInterval(this.questionTimerId);
+    document.getElementById('question-modal').style.display = 'none';
+    this.state = 'PLAYING';
+    this.questionCooldown = 1.6;
+
+    if (this.player) {
+      this.player.x -= (this.player.facing * 45);
+      this.player.vx = 0;
+    }
+
+    this.currentBoxObj = null;
+    this.currentQuestion = null;
+    this.showBanner("Soalan dibatalkan. Anda boleh sentuh kotak semula bila-bila masa!", 2000);
+  },
+
+  // APABILA MASA 30s HABIS: SOALAN TERTUTUP & PERLU AMBIL KOTAK SEMULA!
+  onQuestionTimeout() {
+    document.getElementById('question-modal').style.display = 'none';
+    this.state = 'PLAYING';
+    this.questionCooldown = 1.6;
+    Sound.wrong();
+
+    if (this.player) {
+      this.player.x -= (this.player.facing * 40);
+      this.player.vx = 0;
+    }
+
+    this.currentBoxObj = null;
+    this.currentQuestion = null;
+    this.showBanner("⏱ Masa 30 saat tamat! Soalan ditutup. Sila ambil/sentuh kotak semula!", 2500);
+  },
+
+  formatMath(str) {
+    if (!str) return "";
+    let s = str.toString().replace(/-/g, '−');
+    s = s.replace(/(\d+½)/g, '$1');
+    s = s.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="frac-top">$1</span><span class="frac-bot">$2</span></span>');
+    return s;
+  },
+
+  handleAnswer(chosenIdx, btnElem) {
+    if (this.questionTimerId) clearInterval(this.questionTimerId);
+    const fb = document.getElementById('q-feedback');
+    const isCorrect = (chosenIdx === this.currentQuestion.answer);
+
+    if (isCorrect) {
+      if (btnElem) btnElem.classList.add('correct');
+      fb.style.color = '#5fd38d';
+      fb.textContent = "✔ BETUL! Tenaga nombor nisbah dipulihkan!";
+      Sound.correct();
+      this.correctAnswersCount++;
+
+      setTimeout(() => {
+        this.closeQuestion();
+        this.grantQuestionReward();
+      }, 900);
+    } else {
+      if (btnElem) btnElem.classList.add('wrong');
+      fb.style.color = '#ff6b6b';
+      Sound.wrong();
+      this.mistakesCount++;
+
+      if (this.stage === 3 || this.stage === 4) {
+        this.timeRemaining = Math.max(1, this.timeRemaining - 10);
+        fb.textContent = "✘ KURANG TEPAT! Masa −10 saat. Cuba lagi!";
+      } else {
+        this.player.hurt(1);
+        fb.textContent = "✘ KURANG TEPAT! −1 HP. Sila jawab semula!";
+      }
+      this.updateHUD();
+
+      setTimeout(() => {
+        if (this.player && this.player.hp <= 0) {
+          this.closeQuestion();
+          this.gameOver("HP habis kerana beban pengiraan nombor nisbah!");
+        } else {
+          document.querySelectorAll('.opt-btn').forEach(b => {
+            b.classList.remove('wrong', 'correct');
+            b.disabled = false;
+          });
+          fb.textContent = "Sila pilih jawapan semula atau tekan Batal...";
+          this.questionTimer = 30;
+          this.questionTimerId = setInterval(() => {
+            this.questionTimer--;
+            document.getElementById('q-timer-val').textContent = `⏱ ${this.questionTimer}s`;
+            if (this.questionTimer <= 0) {
+              clearInterval(this.questionTimerId);
+              Game.onQuestionTimeout();
+            }
+          }, 1000);
+        }
+      }, 1200);
+    }
+  },
+
+  closeQuestion() {
+    if (this.questionTimerId) clearInterval(this.questionTimerId);
+    document.getElementById('question-modal').style.display = 'none';
+    this.state = 'PLAYING';
+    this.questionCooldown = 0.5;
+  },
+
+  grantQuestionReward() {
+    const q = this.currentQuestion;
+    
+    if (this.currentBoxObj) {
+      this.currentBoxObj.opened = true;
+      const type = this.currentBoxObj.type;
+
+      if (type === 'speed') {
+        this.player.speedBoost = true;
+        this.player.maxSpeed = 6.2;
+        this.inventory.speedBoost = true;
+        this.showBanner("⚡ Kasut Laju Diperoleh! (+5 Peluru)");
+        this.player.addAmmo(5);
+      } else if (type === 'shield') {
+        this.player.hasShield = true;
+        this.inventory.hasShield = true;
+        this.showBanner("🛡 Perisai Tenaga Diperoleh! (+5 Peluru)");
+        this.player.addAmmo(5);
+      } else if (type === 'boost') {
+        this.player.hoverBoost = 1.4;
+        this.showBanner("🚀 Penggalak Kelajuan Hoverboard! (+5 Peluru)");
+        this.player.addAmmo(5);
+      } else if (type === 'digit') {
+        const digitChar = q.digit || "7";
+        if (this.bombRevealedDigits) {
+          this.bombRevealedDigits[q.qIndex] = digitChar;
+        }
+        this.updateBombHUD();
+        this.showBanner(`🔑 Digit Kod Bom: [ ${digitChar} ] (+4 Peluru)`);
+        this.player.addAmmo(4);
+      } else if (type === 'power') {
+        this.player.powerBullets += 4;
+        this.player.addAmmo(6);
+        this.showBanner("★ PISTOL KUASA: +6 Peluru & 4 Peluru Emas!");
+      } else if (type === 'power5') {
+        this.player.powerBullets += 5;
+        this.player.addAmmo(6);
+        this.showBanner("★ MOD SUKAR: +5 Peluru Emas & Peluru Penuh!");
+      } else {
+        this.player.addAmmo(4);
+      }
+
+      this.checkCratesObjective();
+    }
+
+    if (q.isGate) {
+      this.gate.unlocked = true;
+      Sound.unlock();
+      this.updateHUD();
+
+      setTimeout(() => {
+        if (this.stage === 1) {
+          this.showStageSuccess("TAHNIAH! Pintu Zon 1 Dibuka! Virus X melarikan diri ke Zon 2!");
+        } else if (this.stage === 3) {
+          this.showStageSuccess("TAHNIAH! Berjaya Memintas Virus X! Menuju ke Bom Rational!");
+        }
+      }, 500);
+    }
+  },
+
+  checkCratesObjective() {
+    const remaining = this.crates.filter(c => !c.opened).length;
+    const total = this.crates.length;
+    const cleared = total - remaining;
+
+    if (this.stage === 1) {
+      this.setMissionText(`Kotak ?: <b>${cleared}/${total}</b> &rarr; Buka Pintu`);
+    } else if (this.stage === 2) {
+      this.setMissionText(`Kotak Peluru: <b>${cleared}/${total}</b>. Tewaskan Virus X! (HP: ${this.boss ? this.boss.hp : 0})`);
+    } else if (this.stage === 3) {
+      this.setMissionText(`Kotak ?: <b>${cleared}/${total}</b> &rarr; Pintu Kelajuan`);
+    } else if (this.stage === 4) {
+      this.setMissionText(`Digit Kod: <b>${cleared}/${total}</b> &rarr; Terminal Bom`);
+    } else if (this.stage === 5) {
+      if (this.energyCoresRecovered >= 4) {
+        this.setMissionText("Kawal wira ke <b>Penjana Utama</b> untuk masukkan 4 Teras!");
+      } else {
+        this.setMissionText(`Tewaskan Virus X! (HP: ${this.boss ? this.boss.hp : 0})`);
+      }
+    }
+  },
+
+  // ------------------------------------------------------------------------
+  // TERMINAL KOD BOM (STAGE 4: TANPA SOALAN PINTU)
+  // ------------------------------------------------------------------------
+  openBombKeypad() {
+    if (this.state === 'KEYPAD') return;
+    this.state = 'KEYPAD';
+    this.bombEnteredCode = "";
+    document.getElementById('code-screen').textContent = "----";
+    document.getElementById('bomb-revealed-code').textContent = this.bombRevealedDigits ? this.bombRevealedDigits.join(' ') : this.bombTargetCode;
+    document.getElementById('bomb-modal').style.display = 'flex';
+  },
+
+  keypadInput(char) {
+    if (this.bombEnteredCode.length < 4) {
+      this.bombEnteredCode += char;
+      Sound.beep();
+      this.updateCodeScreen();
+    }
+  },
+
+  keypadClear() {
+    this.bombEnteredCode = "";
+    Sound.beep();
+    this.updateCodeScreen();
+  },
+
+  updateCodeScreen() {
+    const pad = "----";
+    const s = this.bombEnteredCode + pad.substring(this.bombEnteredCode.length);
+    document.getElementById('code-screen').textContent = s;
+  },
+
+  keypadEnter() {
+    if (this.bombEnteredCode.length !== 4) return;
+    const modal = document.getElementById('bomb-modal');
+
+    if (this.bombEnteredCode === this.bombTargetCode) {
+      Sound.fanfare();
+      modal.style.display = 'none';
+      this.gate.unlocked = true;
+      this.showStageSuccess("BOM RATIONAL BERJAYA DINYAHAKTIFKAN! Pintu Zon 5 Terbuka!");
+    } else {
+      Sound.wrong();
+      this.timeRemaining = Math.max(1, this.timeRemaining - 10);
+      this.updateHUD();
+      this.bombEnteredCode = "";
+      this.updateCodeScreen();
+      this.showBanner("⚠ KOD SALAH! Tolakan −10 saat!");
+    }
+  },
+
+  showStageSuccess(msg) {
+    this.state = 'STAGE_SUCCESS';
+    this.stopStage();
+    this.hideAllScreens();
+    document.getElementById('stage-success-msg').textContent = msg;
+    document.getElementById('screen-stage-success').classList.add('active');
+  },
+
+  updateHUD() {
+    if (!this.player) return;
+    document.getElementById('hud-hp').textContent = `${Math.max(0, this.player.hp)}/5`;
+    document.getElementById('hud-ammo-val').textContent = `${this.player.ammo}/${this.player.maxAmmo}`;
+    document.getElementById('hud-cores-val').textContent = `${this.energyCoresRecovered}/4`;
+    document.getElementById('hud-timer').textContent = `${this.timeRemaining}s`;
+
+    const itemBadge = document.getElementById('hud-item-badge');
+    const itemName = document.getElementById('hud-item-name');
+    if (this.player.powerBullets > 0) {
+      itemBadge.style.display = 'flex';
+      itemName.textContent = `Pistol Kuasa (${this.player.powerBullets})`;
+    } else if (this.player.speedBoost) {
+      itemBadge.style.display = 'flex';
+      itemName.textContent = `Kasut Laju`;
+    } else if (this.player.hasShield) {
+      itemBadge.style.display = 'flex';
+      itemName.textContent = `Perisai Tenaga`;
+    } else if (this.player.hoverBoost > 1) {
+      itemBadge.style.display = 'flex';
+      itemName.textContent = `Hover Boost`;
+    } else {
+      itemBadge.style.display = 'none';
+    }
+  },
+
+  // ------------------------------------------------------------------------
+  // ANIMASI MEMASUKKAN 4 TERAS DI PENJANA UTAMA MATH CITY (STAGE 5 AKHIR)
+  // ------------------------------------------------------------------------
+  triggerGeneratorInsertion() {
+    if (this.state === 'INSERTION') return;
+    this.state = 'INSERTION';
+    this.insertionStep = 0;
+    this.player.vx = 0;
+
+    this.showBanner("MEMASUKKAN TERAS TENAGA KE PENJANA UTAMA...", 3000);
+
+    const insertInterval = setInterval(() => {
+      this.insertionStep++;
+      Sound.coreChime();
+      this.generator.insertedCores = this.insertionStep;
+
+      for (let i = 0; i < 15; i++) {
+        Game.particles.push(new Particle(
+          this.generator.x + 45,
+          this.generator.y + 30,
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 8,
+          '#38ef7d'
+        ));
+      }
+
+      this.showBanner(`Teras ${this.insertionStep}/4 Berjaya Dimasukkan!`);
+
+      if (this.insertionStep >= 4) {
+        clearInterval(insertInterval);
+        Sound.fanfare();
+        this.generator.poweredOn = true;
+        this.showBanner("KUASA MATH CITY BERJAYA DIKEMBALIKAN 100%!", 3000);
+
+        setTimeout(() => {
+          this.showVictory();
+        }, 2200);
+      }
+    }, 900);
+  },
+
+  setupInput() {
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.code] = true;
+      if (e.code === 'KeyP') this.togglePause();
+      if (e.code === 'KeyM') Sound.toggleMusic();
+      if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.code] = false;
+    });
+
+    const bindTouch = (id, keyCode) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const start = (ev) => {
+        ev.preventDefault();
+        this.keys[keyCode] = true;
+        el.classList.add('active');
+      };
+      const end = (ev) => {
+        ev.preventDefault();
+        this.keys[keyCode] = false;
+        el.classList.remove('active');
+      };
+      el.addEventListener('touchstart', start, { passive: false });
+      el.addEventListener('touchend', end, { passive: false });
+      el.addEventListener('touchcancel', end, { passive: false });
+    };
+
+    bindTouch('t-left', 'KeyA');
+    bindTouch('t-right', 'KeyD');
+    bindTouch('t-up', 'KeyW');
+    bindTouch('t-down', 'KeyS');
+    bindTouch('t-jump', 'Space');
+    bindTouch('t-fire', 'KeyJ');
+  },
+
+  isDown(action) {
+    if (action === 'left') return this.keys['ArrowLeft'] || this.keys['KeyA'];
+    if (action === 'right') return this.keys['ArrowRight'] || this.keys['KeyD'];
+    if (action === 'up') return this.keys['ArrowUp'] || this.keys['KeyW'];
+    if (action === 'down') return this.keys['ArrowDown'] || this.keys['KeyS'];
+    if (action === 'jump') return !!this.keys['Space'];
+    if (action === 'fire') return !!this.keys['KeyJ'];
+    return false;
+  },
+
+  isJustPressed(action) {
+    if (action === 'jump') {
+      const now = !!this.keys['Space'];
+      const prev = !!this.prevKeys['Space'];
+      return now && !prev;
+    }
+    return false;
+  },
+
+  savePrevInput() {
+    this.prevKeys['Space'] = !!this.keys['Space'];
+  }
+};
+
+/* ==========================================================================
+   KELAS: PENJANA UTAMA, TERAS TENAGA, WIRA, MUSUH, BOS, CRATE, PINTU, PELURU
+   ========================================================================== */
+
+class GeneratorTerminal {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.w = 90;
+    this.h = 100;
+    this.insertedCores = 0;
+    this.poweredOn = false;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const cx = this.x + this.w / 2;
+
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = this.poweredOn ? '#38ef7d' : '#38bdf8';
+    ctx.lineWidth = 3;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+    ctx.fillStyle = this.poweredOn ? 'rgba(56, 239, 125, 0.45)' : 'rgba(56, 189, 248, 0.2)';
+    ctx.fillRect(this.x + 12, this.y + 12, this.w - 24, 40);
+
+    for (let i = 0; i < 4; i++) {
+      const sx = this.x + 16 + i * 16;
+      const sy = this.y + 70;
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(sx, sy, 12, 16);
+
+      if (this.insertedCores > i) {
+        ctx.fillStyle = '#38ef7d';
+        ctx.fillRect(sx + 2, sy + 2, 8, 12);
+      }
+    }
+
+    if (this.poweredOn) {
+      const grad = ctx.createLinearGradient(cx, this.y, cx, 0);
+      grad.addColorStop(0, 'rgba(56, 239, 125, 0.8)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - 20, 0, 40, this.y);
+    }
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.poweredOn ? 'PENJANA: 100%' : 'PENJANA UTAMA', cx, this.y - 12);
+
+    ctx.restore();
+  }
+}
+
+class EnergyCore {
+  constructor(x, y, coreNum) {
+    this.x = x;
+    this.y = y;
+    this.baseY = y;
+    this.w = 38;
+    this.h = 38;
+    this.coreNum = coreNum;
+    this.collected = false;
+  }
+
+  update(dt) {
+    this.y = this.baseY + Math.sin(Date.now() / 200) * 6;
+  }
+
+  collect() {
+    if (this.collected) return;
+    this.collected = true;
+    Game.energyCoresRecovered = Math.max(Game.energyCoresRecovered, this.coreNum);
+    Game.updateHUD();
+    Sound.coreChime();
+    Game.showBanner(`💎 TERAS TENAGA ${this.coreNum}/4 DIPEROLEH!`);
+
+    for (let i = 0; i < 12; i++) {
+      Game.particles.push(new Particle(
+        this.x + 19,
+        this.y + 19,
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 6,
+        '#38ef7d'
+      ));
+    }
+  }
+
+  draw(ctx) {
+    if (this.collected) return;
+    ctx.save();
+    const cx = this.x + 19;
+    const cy = this.y + 19;
+
+    ctx.strokeStyle = 'rgba(56, 239, 125, 0.7)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 22 + Math.sin(Date.now() / 150) * 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#38ef7d';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 16);
+    ctx.lineTo(cx + 14, cy);
+    ctx.lineTo(cx, cy + 16);
+    ctx.lineTo(cx - 14, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#38ef7d';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`TERAS ${this.coreNum}`, cx, cy - 26);
+
+    ctx.restore();
+  }
+}
+
+class Player {
+  constructor(x, y, isHover = false, ammo = 5, hp = 5) {
+    this.x = x;
+    this.y = y;
+    this.w = 46;
+    this.h = 76;
+    this.vx = 0;
+    this.vy = 0;
+    this.hp = hp; // Menerima baki HP yang dilanjutkan dari stage sebelumnya!
+    this.ammo = ammo;
+    this.maxAmmo = 20;
+    this.facing = 1;
+    this.aimUp = false;
+    this.grounded = false;
+    this.isHover = isHover;
+
+    this.maxJumps = 2;
+    this.jumpsLeft = 2;
+    this.doubleJumpParticleTimer = 0;
+
+    this.powerBullets = 0;
+    this.hasShield = false;
+    this.speedBoost = false;
+    this.hoverBoost = 1.0;
+    this.maxSpeed = isHover ? 6.5 : 4.6;
+
+    this.invulnerableTimer = 0;
+    this.fireCooldown = 0;
+    this.runAnimTimer = 0;
+    this.lastSafeX = x;
+    this.lastSafeY = y;
+    this.muzzleFlash = 0;
+    this.spawnTimer = 3.0;
+  }
+
+  addAmmo(amt) {
+    this.ammo = Math.min(this.maxAmmo, this.ammo + amt);
+    Game.updateHUD();
+  }
+
+  hurt(damage = 1) {
+    if (this.invulnerableTimer > 0) return;
+    if (this.hasShield) {
+      this.hasShield = false;
+      Game.inventory.hasShield = false;
+      this.invulnerableTimer = 1.5;
+      Sound.hit();
+      Game.showBanner("🛡 Perisai Menahan Serangan!");
+      Game.updateHUD();
+      return;
+    }
+    this.hp -= damage;
+    this.invulnerableTimer = 2.0;
+    Sound.hit();
+    Game.updateHUD();
+
+    if (this.hp <= 0) {
+      Game.gameOver("Rational Hero telah tumbang! Sila ulang dari awal!");
+    }
+  }
+
+  update(dt) {
+    if (this.spawnTimer > 0) this.spawnTimer -= dt;
+    if (this.invulnerableTimer > 0) this.invulnerableTimer -= dt;
+    if (this.fireCooldown > 0) this.fireCooldown -= dt;
+    if (this.muzzleFlash > 0) this.muzzleFlash -= dt;
+    if (this.doubleJumpParticleTimer > 0) this.doubleJumpParticleTimer -= dt;
+
+    if (Game.state === 'INSERTION') {
+      this.vx = 0;
+      return;
+    }
+
+    const left = Game.isDown('left');
+    const right = Game.isDown('right');
+    const up = Game.isDown('up');
+    const down = Game.isDown('down');
+    const jumpHeld = Game.isDown('jump');
+    const jumpJustPressed = Game.isJustPressed('jump');
+    const fire = Game.isDown('fire');
+
+    this.aimUp = up;
+
+    const accel = this.grounded ? 0.8 : 0.45;
+    const friction = this.grounded ? 0.78 : 0.92;
+    const topSpeed = this.maxSpeed * this.hoverBoost;
+
+    if (left) {
+      this.vx -= accel;
+      this.facing = -1;
+      this.runAnimTimer += dt * 14;
+    } else if (right) {
+      this.vx += accel;
+      this.facing = 1;
+      this.runAnimTimer += dt * 14;
+    } else {
+      this.vx *= friction;
+      this.runAnimTimer = 0;
+    }
+
+    if (this.vx > topSpeed) this.vx = topSpeed;
+    if (this.vx < -topSpeed) this.vx = -topSpeed;
+
+    this.dropThrough = (down && jumpHeld);
+
+    if (jumpJustPressed && !this.dropThrough) {
+      if (this.grounded) {
+        const jumpImpulse = this.isHover ? -13.5 : -12.0;
+        this.vy = jumpImpulse;
+        this.grounded = false;
+        this.jumpsLeft = 1;
+        Sound.jump(false);
+      } else if (this.jumpsLeft > 0) {
+        const doubleJumpImpulse = this.isHover ? -12.5 : -11.5;
+        this.vy = doubleJumpImpulse;
+        this.jumpsLeft--;
+        this.doubleJumpParticleTimer = 0.25;
+        Sound.jump(true);
+        for (let i = 0; i < 6; i++) {
+          Game.particles.push(new Particle(
+            this.x + this.w / 2 + (Math.random() * 20 - 10),
+            this.y + this.h - 4,
+            (Math.random() - 0.5) * 4,
+            Math.random() * 3 + 1,
+            '#4fc3d9'
+          ));
+        }
+      }
+    }
+
+    if (!jumpHeld && this.vy < -4) {
+      this.vy *= 0.7;
+    }
+
+    this.vy += Game.gravity;
+    if (this.vy > 14) this.vy = 14;
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (this.x < 0) { this.x = 0; this.vx = 0; }
+    if (this.x + this.w > Game.worldWidth) { this.x = Game.worldWidth - this.w; this.vx = 0; }
+
+    this.grounded = false;
+    for (const p of Game.platforms) {
+      if (p.isThin) {
+        if (!this.dropThrough && this.vy >= 0 &&
+            this.x + this.w > p.x && this.x < p.x + p.w &&
+            this.y + this.h >= p.y && this.y + this.h <= p.y + p.h + this.vy + 2) {
+          this.y = p.y - this.h;
+          this.vy = 0;
+          this.grounded = true;
+          this.jumpsLeft = this.maxJumps;
+          this.lastSafeX = this.x;
+          this.lastSafeY = this.y;
+        }
+      } else {
+        if (this.x + this.w > p.x && this.x < p.x + p.w &&
+            this.y + this.h > p.y && this.y < p.y + p.h) {
+          if (this.vy > 0 && this.y + this.h - this.vy <= p.y + 4) {
+            this.y = p.y - this.h;
+            this.vy = 0;
+            this.grounded = true;
+            this.jumpsLeft = this.maxJumps;
+            this.lastSafeX = this.x;
+            this.lastSafeY = this.y;
+          }
+        }
+      }
+    }
+
+    if (this.y > Game.worldHeight + 80) {
+      this.x = this.lastSafeX;
+      this.y = this.lastSafeY - 10;
+      this.vx = 0;
+      this.vy = 0;
+      this.jumpsLeft = this.maxJumps;
+      if (Game.chasingVirus) {
+        Game.chasingVirus.x = Math.max(-300, this.x - 380);
+      }
+      Game.timeRemaining = Math.max(1, Game.timeRemaining - 3);
+      Game.showBanner("Jatuh ke gaung! Dihantar ke tempat selamat (−3s)");
+      Game.updateHUD();
+    }
+
+    if (fire && this.fireCooldown <= 0) {
+      this.shoot();
+    }
+  }
+
+  shoot() {
+    if (this.ammo <= 0 && this.powerBullets <= 0) {
+      Sound.beep();
+      Game.showBanner("TIADA PELURU! Sentuh kotak ? untuk tambah peluru!");
+      this.fireCooldown = 0.3;
+      return;
+    }
+
+    const isPower = (this.powerBullets > 0);
+    if (isPower) {
+      this.powerBullets--;
+      this.fireCooldown = 0.22;
+    } else {
+      this.ammo--;
+      this.fireCooldown = 0.18;
+    }
+    this.muzzleFlash = 0.08;
+
+    let bx = this.facing === 1 ? this.x + this.w : this.x - 8;
+    let by = this.y + 30;
+    let bvx = this.facing * 12;
+    let bvy = 0;
+
+    if (this.aimUp) {
+      bx = this.x + (this.w / 2) - 4;
+      by = this.y - 4;
+      bvx = 0;
+      bvy = -13;
+    }
+
+    Game.playerBullets.push(new Bullet(bx, by, bvx, bvy, isPower));
+    Sound.shoot(isPower);
+    Game.updateHUD();
+  }
+
+  draw(ctx) {
+    ctx.save();
+
+    if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0) {
+      ctx.globalAlpha = 0.45;
+    }
+
+    if (this.doubleJumpParticleTimer > 0) {
+      ctx.fillStyle = 'rgba(79, 195, 217, 0.7)';
+      ctx.beginPath();
+      ctx.ellipse(this.x + this.w / 2, this.y + this.h + 2, 22, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (this.isHover) {
+      ctx.fillStyle = '#4fc3d9';
+      ctx.strokeStyle = '#0d1933';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(this.x + this.w / 2, this.y + this.h + 2, 34, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffd75e';
+      ctx.beginPath();
+      ctx.arc(this.x + this.w / 2 - (this.facing * 20), this.y + this.h + 3, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (this.hasShield) {
+      ctx.strokeStyle = 'rgba(79, 195, 217, 0.85)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x + this.w / 2, this.y + this.h / 2, 46, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    const cx = this.x + this.w / 2;
+    const cy = this.y;
+
+    // Jubah
+    ctx.fillStyle = '#ee5253';
+    ctx.strokeStyle = '#1a0000';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const capeOffset = Math.sin(this.runAnimTimer) * 6;
+    ctx.moveTo(cx - (this.facing * 10), cy + 24);
+    ctx.quadraticCurveTo(cx - (this.facing * 28), cy + 42 + capeOffset, cx - (this.facing * 34), cy + 62);
+    ctx.lineTo(cx - (this.facing * 8), cy + 48);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Kaki
+    ctx.fillStyle = '#ffd75e';
+    ctx.strokeStyle = '#101830';
+    ctx.lineWidth = 3;
+    const legSwing = Math.sin(this.runAnimTimer) * 12;
+    const leftLegY = cy + 50;
+    const rightLegY = cy + 50;
+    const leftLegH = 24 + (this.grounded ? legSwing : 0);
+    const rightLegH = 24 - (this.grounded ? legSwing : 0);
+
+    ctx.fillRect(cx - 14, leftLegY, 10, leftLegH);
+    ctx.strokeRect(cx - 14, leftLegY, 10, leftLegH);
+    ctx.fillRect(cx + 4, rightLegY, 10, rightLegH);
+    ctx.strokeRect(cx + 4, rightLegY, 10, rightLegH);
+
+    // Kasut Laju Visual
+    if (this.speedBoost) {
+      ctx.save();
+      ctx.fillStyle = '#4fc3d9';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+
+      const leftFootY = leftLegY + leftLegH - 10;
+      ctx.fillRect(cx - 16, leftFootY, 14, 12);
+      ctx.strokeRect(cx - 16, leftFootY, 14, 12);
+
+      const rightFootY = rightLegY + rightLegH - 10;
+      ctx.fillRect(cx + 2, rightFootY, 14, 12);
+      ctx.strokeRect(cx + 2, rightFootY, 14, 12);
+
+      ctx.fillStyle = '#ffd75e';
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, leftFootY + 2);
+      ctx.lineTo(cx - 24, leftFootY - 4);
+      ctx.lineTo(cx - 16, leftFootY + 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + 16, rightFootY + 2);
+      ctx.lineTo(cx + 24, rightFootY - 4);
+      ctx.lineTo(cx + 16, rightFootY + 8);
+      ctx.closePath();
+      ctx.fill();
+
+      if (Math.abs(this.vx) > 2) {
+        ctx.fillStyle = 'rgba(79, 195, 217, 0.6)';
+        ctx.beginPath();
+        ctx.arc(cx - (this.facing * 18), leftFootY + 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Badan
+    ctx.fillStyle = '#ff9f43';
+    ctx.fillRect(cx - 16, cy + 20, 32, 32);
+    ctx.strokeRect(cx - 16, cy + 20, 32, 32);
+
+    ctx.fillStyle = '#ffd75e';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ℚ', cx, cy + 42);
+
+    // Topi Keledar
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx, cy + 12, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Visor
+    ctx.fillStyle = '#4fc3d9';
+    ctx.fillRect(cx + (this.facing === 1 ? 0 : -10), cy + 8, 12, 7);
+    ctx.strokeRect(cx + (this.facing === 1 ? 0 : -10), cy + 8, 12, 7);
+
+    // Pistol
+    ctx.fillStyle = this.powerBullets > 0 ? '#ffd75e' : '#576574';
+    ctx.strokeStyle = '#0d1322';
+    ctx.lineWidth = 2.5;
+
+    if (this.aimUp) {
+      ctx.fillRect(cx - 3, cy - 8, 8, 18);
+      ctx.strokeRect(cx - 3, cy - 8, 8, 18);
+      if (this.muzzleFlash > 0) {
+        ctx.fillStyle = '#ffd75e';
+        ctx.beginPath();
+        ctx.arc(cx + 1, cy - 12, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      const armX = this.facing === 1 ? cx + 10 : cx - 24;
+      ctx.fillRect(armX, cy + 28, 16, 7);
+      ctx.strokeRect(armX, cy + 28, 16, 7);
+      if (this.muzzleFlash > 0) {
+        ctx.fillStyle = '#ffd75e';
+        ctx.beginPath();
+        ctx.arc(this.facing === 1 ? armX + 18 : armX - 4, cy + 31, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    if (this.spawnTimer > 0) {
+      const bob = Math.sin(Date.now() / 150) * 4;
+      ctx.fillStyle = '#ffd75e';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('ANDA', cx, cy - 24 + bob);
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, cy - 18 + bob);
+      ctx.lineTo(cx + 6, cy - 18 + bob);
+      ctx.lineTo(cx, cy - 12 + bob);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+
+class Particle {
+  constructor(x, y, vx, vy, color) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.color = color;
+    this.alpha = 1.0;
+    this.alive = true;
+  }
+  update(dt) {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.alpha -= dt * 3.5;
+    if (this.alpha <= 0) this.alive = false;
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.alpha);
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Bullet {
+  constructor(x, y, vx, vy, isPower = false) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.isPower = isPower;
+    this.radius = isPower ? 9 : 4.5;
+    this.alive = true;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < Game.cameraX - 50 || this.x > Game.cameraX + 1020 ||
+        this.y < -50 || this.y > Game.worldHeight + 50) {
+      this.alive = false;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    if (this.isPower) {
+      ctx.fillStyle = '#ffd75e';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 215, 94, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius + 4, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#fffa65';
+      ctx.strokeStyle = '#ff9f43';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+class EnemyBullet {
+  constructor(x, y, vx, vy) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.radius = 6;
+    this.alive = true;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < Game.cameraX - 50 || this.x > Game.cameraX + 1020 ||
+        this.y < -50 || this.y > Game.worldHeight + 50) {
+      this.alive = false;
+    }
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = '#ff6b6b';
+    ctx.strokeStyle = '#ee5253';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+class Platform {
+  constructor(x, y, w, h, isThin = false) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.isThin = isThin;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    if (this.isThin) {
+      ctx.fillStyle = '#2c3a5e';
+      ctx.strokeStyle = '#4fc3d9';
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(this.x, this.y, this.w, this.h);
+      ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+      ctx.fillStyle = '#ffd75e';
+      for (let i = 8; i < this.w - 12; i += 32) {
+        ctx.fillRect(this.x + i, this.y + 4, 14, 4);
+      }
+    } else {
+      ctx.fillStyle = '#182444';
+      ctx.strokeStyle = '#2a3a68';
+      ctx.lineWidth = 3;
+      ctx.fillRect(this.x, this.y, this.w, this.h);
+      ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+      ctx.fillStyle = '#3a4e80';
+      ctx.fillRect(this.x, this.y, this.w, 8);
+    }
+    ctx.restore();
+  }
+}
+
+class Crate {
+  constructor(x, y, questionIdx, type = 'item', label = "Item", touchOnly = false) {
+    this.x = x;
+    this.y = y;
+    this.w = 48;
+    this.h = 48;
+    this.questionIdx = questionIdx;
+    this.type = type;
+    this.label = label;
+    this.touchOnly = touchOnly;
+    this.opened = false;
+    this.baseY = y;
+  }
+
+  update(dt) {
+    this.y = this.baseY + Math.sin(Date.now() / 250) * 5;
+  }
+
+  draw(ctx) {
+    if (this.opened) return;
+    ctx.save();
+    ctx.fillStyle = '#ffd75e';
+    ctx.strokeStyle = '#101830';
+    ctx.lineWidth = 3;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+    ctx.strokeStyle = '#ff9f43';
+    ctx.strokeRect(this.x + 4, this.y + 4, this.w - 8, this.h - 8);
+
+    ctx.fillStyle = '#101830';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', this.x + this.w / 2, this.y + this.h / 2);
+    ctx.restore();
+  }
+}
+
+class Gate {
+  constructor(x, y, questionIdx, isBombTerminal = false) {
+    this.x = x;
+    this.y = y;
+    this.w = 54;
+    this.h = 130;
+    this.questionIdx = questionIdx;
+    this.isBombTerminal = isBombTerminal;
+    this.unlocked = false;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    if (this.unlocked) {
+      ctx.fillStyle = 'rgba(95, 211, 141, 0.4)';
+      ctx.strokeStyle = '#5fd38d';
+      ctx.lineWidth = 3;
+      ctx.fillRect(this.x, this.y, this.w, this.h);
+      ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+      ctx.fillStyle = '#5fd38d';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('BUKA', this.x + this.w / 2, this.y + 60);
+    } else {
+      ctx.fillStyle = 'rgba(238, 82, 83, 0.5)';
+      ctx.strokeStyle = '#ff6b6b';
+      ctx.lineWidth = 3;
+      ctx.fillRect(this.x, this.y, this.w, this.h);
+      ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🔒', this.x + this.w / 2, this.y + 45);
+
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText(this.isBombTerminal ? 'TERMINAL' : 'KUNCI', this.x + this.w / 2, this.y + 80);
+    }
+    ctx.restore();
+  }
+}
+
+class Enemy {
+  constructor(x, y, type = 'drone') {
+    this.x = x;
+    this.y = y;
+    this.type = type;
+    this.w = 44;
+    this.h = 44;
+    this.hp = 2;
+    this.shootTimer = 2.0;
+    this.alive = true;
+    this.vx = (Math.random() > 0.5 ? 1 : -1) * 0.8;
+    this.startX = x;
+  }
+
+  update(dt, player) {
+    this.x += this.vx;
+    if (Math.abs(this.x - this.startX) > 70) this.vx *= -1;
+
+    const dist = Math.hypot(player.x - this.x, player.y - this.y);
+    if (dist < 420) {
+      this.shootTimer -= dt;
+      if (this.shootTimer <= 0) {
+        this.shootTimer = 2.5;
+        const angle = Math.atan2((player.y + 30) - (this.y + 20), (player.x + 20) - (this.x + 20));
+        const spd = 3.6;
+        Game.enemyBullets.push(new EnemyBullet(this.x + 20, this.y + 20, Math.cos(angle) * spd, Math.sin(angle) * spd));
+        Sound.enemyShot();
+      }
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.strokeStyle = '#0a0d18';
+    ctx.lineWidth = 3;
+
+    if (this.type === 'drone') {
+      ctx.fillStyle = '#8b7bd8';
+      ctx.fillRect(this.x, this.y + 10, this.w, 24);
+      ctx.strokeRect(this.x, this.y + 10, this.w, 24);
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.beginPath();
+      ctx.arc(this.x + this.w / 2, this.y + 22, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#eef3ff';
+      ctx.fillRect(this.x + 6, this.y + 4, 32, 4);
+    } else {
+      ctx.fillStyle = '#ff6b6b';
+      ctx.beginPath();
+      ctx.arc(this.x + 22, this.y + 22, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffd75e';
+      ctx.beginPath();
+      ctx.arc(this.x + 22, this.y + 22, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// --------------------------------------------------------------------------
+// CHASING VIRUS: BERHENTI AWAL, HANYA MULA MENGEJAR SELEPAS PEMAIN GERAK
+// --------------------------------------------------------------------------
+class ChasingVirus {
+  constructor(x, y, speed = 1.25, isHover = false) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+    this.isHover = isHover;
+    this.w = isHover ? 70 : 140;
+    this.h = isHover ? 70 : 320;
+    this.activated = false;
+  }
+
+  update(dt, player) {
+    if (!this.activated) {
+      if (player.x > 85 || Math.abs(player.vx) > 0.4 || player.vy < -1) {
+        this.activated = true;
+        Game.showBanner("AWAS! VIRUS X MULA MENGEJAR! LARI, HERO!", 2000);
+      } else {
+        return;
+      }
+    }
+
+    if (player.x > (Game.worldWidth - 360)) return;
+
+    this.x += this.speed;
+
+    if (player.x < this.x + this.w) {
+      player.hurt(1);
+      player.x = this.x + this.w + 35;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    if (this.isHover) {
+      ctx.fillStyle = '#8b7bd8';
+      ctx.strokeStyle = '#ff6b6b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x + 35, this.y + 25, 26, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(this.x + 42, this.y + 18, 8, 8);
+
+      ctx.fillStyle = '#2c3a5e';
+      ctx.fillRect(this.x + 10, this.y + 55, 50, 10);
+    } else {
+      ctx.fillStyle = 'rgba(74, 20, 140, 0.88)';
+      ctx.strokeStyle = '#ff6b6b';
+      ctx.lineWidth = 4;
+      ctx.fillRect(this.x, 80, this.w, 380);
+      ctx.strokeRect(this.x, 80, this.w, 380);
+
+      ctx.fillStyle = '#ff5252';
+      ctx.beginPath();
+      ctx.arc(this.x + this.w - 30, 220, 14, 0, Math.PI * 2);
+      ctx.arc(this.x + this.w - 30, 280, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('VIRUS X', this.x + 20, 170);
+    }
+    ctx.restore();
+  }
+}
+
+class Boss {
+  constructor(x, y, maxHp = 8, isFinal = false) {
+    this.x = x;
+    this.y = y;
+    this.maxHp = maxHp;
+    this.hp = maxHp;
+    this.isFinal = isFinal;
+    this.w = isFinal ? 90 : 80;
+    this.h = isFinal ? 110 : 96;
+    this.shootTimer = 2.5;
+    this.moveTimer = 0;
+    this.hurtFlash = 0;
+    this.defeated = false;
+  }
+
+  update(dt, player) {
+    if (this.defeated) return;
+    this.moveTimer += dt;
+    if (this.hurtFlash > 0) this.hurtFlash -= dt;
+
+    if (this.isFinal) {
+      this.x += Math.cos(this.moveTimer * 1.5) * 2.8;
+      this.y += Math.sin(this.moveTimer * 2.0) * 1.8;
+    } else {
+      this.x += Math.cos(this.moveTimer * 1.1) * 1.2;
+      this.y += Math.sin(this.moveTimer * 1.0) * 0.9;
+    }
+
+    if (this.x < 320) this.x = 320;
+    if (this.x > Game.worldWidth - 140) this.x = Game.worldWidth - 140;
+    if (this.y < 120) this.y = 120;
+    if (this.y > 340) this.y = 340;
+
+    this.shootTimer -= dt;
+    if (this.shootTimer <= 0) {
+      this.shootTimer = this.isFinal ? 2.5 : 3.4;
+      if (this.isFinal) {
+        const baseAngle = Math.atan2((player.y + 30) - (this.y + 40), (player.x + 20) - (this.x + 20));
+        [-0.22, 0, 0.22].forEach(offset => {
+          const a = baseAngle + offset;
+          Game.enemyBullets.push(new EnemyBullet(this.x + 20, this.y + 40, Math.cos(a) * 3.8, Math.sin(a) * 3.8));
+        });
+      } else {
+        const a = Math.atan2((player.y + 30) - (this.y + 40), (player.x + 20) - (this.x + 20));
+        Game.enemyBullets.push(new EnemyBullet(this.x + 20, this.y + 40, Math.cos(a) * 2.6, Math.sin(a) * 2.6));
+      }
+      Sound.enemyShot();
+    }
+  }
+
+  takeHit(isPower) {
+    if (this.defeated) return;
+    const dmg = isPower ? 2 : 1;
+    this.hp -= dmg;
+    this.hurtFlash = 0.15;
+
+    if (isPower) {
+      Sound.critical();
+      Game.showBanner("★ SERANGAN KRITIKAL! Virus X HP −2!");
+    } else {
+      Sound.hit();
+      Game.showBanner("Kena! Virus X HP −1!");
+    }
+
+    for (let i = 0; i < 5; i++) {
+      Game.particles.push(new Particle(
+        this.x + this.w / 2 + (Math.random() * 20 - 10),
+        this.y + this.h / 2 + (Math.random() * 20 - 10),
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4,
+        isPower ? '#ffd75e' : '#ff6b6b'
+      ));
+    }
+
+    Game.checkCratesObjective();
+
+    if (this.hp <= 0) {
+      this.defeated = true;
+      Sound.critical();
+
+      const coreNumber = this.isFinal ? 4 : 2;
+      Game.energyCores.push(new EnergyCore(this.x + 20, this.y + 30, coreNumber));
+      Game.showBanner(`🏆 VIRUS X TUMBANG! Kutip Teras Tenaga ${coreNumber}!`);
+    }
+  }
+
+  draw(ctx) {
+    if (this.defeated) return;
+    ctx.save();
+    const barW = 100;
+    const barH = 10;
+    const barX = this.x + (this.w / 2) - (barW / 2);
+    const barY = this.y - 20;
+
+    // Bar HP
+    ctx.fillStyle = '#0b1120';
+    ctx.fillRect(barX, barY, barW, barH);
+    const hpRatio = Math.max(0, this.hp / this.maxHp);
+    ctx.fillStyle = hpRatio > 0.4 ? '#ff6b6b' : '#ff4757';
+    ctx.fillRect(barX, barY, barW * hpRatio, barH);
+    ctx.strokeStyle = '#eef3ff';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    ctx.fillStyle = '#eef3ff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`VIRUS X: ${this.hp}/${this.maxHp}`, this.x + this.w / 2, barY - 4);
+
+    // Aura
+    ctx.strokeStyle = this.hurtFlash > 0 ? '#ffffff' : 'rgba(139, 123, 216, 0.6)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(this.x + this.w / 2, this.y + this.h / 2, 54, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Body
+    ctx.fillStyle = this.hurtFlash > 0 ? '#ff7675' : '#4a154b';
+    ctx.strokeStyle = '#0d1322';
+    ctx.lineWidth = 3.5;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+    // Visor
+    ctx.fillStyle = '#ff4757';
+    ctx.fillRect(this.x + 14, this.y + 24, this.w - 28, 14);
+    ctx.strokeRect(this.x + 14, this.y + 24, this.w - 28, 14);
+
+    // Dark Core
+    ctx.fillStyle = '#101830';
+    ctx.beginPath();
+    ctx.arc(this.x + this.w / 2, this.y + 70, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ==========================================================================
+   GELUNG UTAMA PERMAINAN (GAME LOOP)
+   ========================================================================== */
+let lastFrameTime = performance.now();
+
+function gameLoop(now) {
+  const dt = Math.min(0.06, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
+
+  // Hanya kemas kini jika PLAYING atau sedang dalam babak INSERTION
+  if ((Game.state === 'PLAYING' || Game.state === 'INSERTION') && Game.player) {
+    updateGame(dt);
+  }
+  renderGame();
+
+  Game.savePrevInput();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateGame(dt) {
+  const p = Game.player;
+  p.update(dt);
+
+  if (Game.questionCooldown > 0) {
+    Game.questionCooldown -= dt;
+  }
+
+  const targetCamX = p.x - (960 / 2) + (p.w / 2);
+  Game.cameraX += (targetCamX - Game.cameraX) * 0.1;
+  if (Game.cameraX < 0) Game.cameraX = 0;
+  if (Game.cameraX > Game.worldWidth - 960) Game.cameraX = Game.worldWidth - 960;
+
+  // Kutip Teras Tenaga
+  for (let i = Game.energyCores.length - 1; i >= 0; i--) {
+    const core = Game.energyCores[i];
+    core.update(dt);
+    if (!core.collected &&
+        p.x + p.w > core.x && p.x < core.x + core.w &&
+        p.y + p.h > core.y && p.y < core.y + core.h) {
+      core.collect();
+
+      if (Game.stage === 2 && core.coreNum === 2) {
+        setTimeout(() => {
+          Game.showStageSuccess("TERAS TENAGA 2 DIPEROLEH! Menuju ke Perlumbaan Hoverboard!");
+        }, 600);
+      }
+      
+      if (Game.stage === 5 && core.coreNum === 4) {
+        Game.generator = new GeneratorTerminal(500, 370);
+        Game.showBanner("Bawa & masukkan 4 Teras ke Penjana Utama di tengah!", 3500);
+        Game.checkCratesObjective();
+      }
+    }
+  }
+
+  // Interaksi dengan Penjana Utama (Stage 5 Akhir)
+  if (Game.generator && Game.state === 'PLAYING') {
+    if (p.x + p.w > Game.generator.x && p.x < Game.generator.x + Game.generator.w &&
+        p.y + p.h > Game.generator.y && p.y < Game.generator.y + Game.generator.h + 20) {
+      Game.triggerGeneratorInsertion();
+    }
+  }
+
+  // Sentuh Kotak ?
+  if (Game.questionCooldown <= 0) {
+    for (const c of Game.crates) {
+      c.update(dt);
+      if (!c.opened &&
+          p.x + p.w > c.x && p.x < c.x + c.w &&
+          p.y + p.h > c.y && p.y < c.y + c.h) {
+        Game.triggerQuestion(c.questionIdx, c);
+        break;
+      }
+    }
+  }
+
+  // Interaksi Pintu / Terminal Bom
+  if (Game.gate && Game.questionCooldown <= 0) {
+    if (p.x + p.w >= Game.gate.x && p.x <= Game.gate.x + Game.gate.w &&
+        p.y + p.h >= Game.gate.y && p.y <= Game.gate.y + Game.gate.h) {
+      
+      if (Game.stage === 4) {
+        const pendingCrates = Game.crates.filter(c => !c.opened).length;
+        if (pendingCrates > 0) {
+          Game.showBanner(`🔒 Kumpulkan semua 4 digit kod dahulu! (${Game.crates.length - pendingCrates}/${Game.crates.length})`);
+          p.x = Game.gate.x - p.w - 10;
+          p.vx = 0;
+        } else {
+          if (!Game.gate.unlocked) {
+            Game.openBombKeypad();
+          } else {
+            Game.showStageSuccess("BOM RATIONAL BERJAYA DINYAHAKTIFKAN! Menuju ke Pangkalan Akhir Virus X!");
+          }
+        }
+      } else {
+        const pendingCrates = Game.crates.filter(c => !c.opened).length;
+        if (pendingCrates > 0) {
+          Game.showBanner(`🔒 Pintu Terkunci! Buka semua kotak ? dahulu (${Game.crates.length - pendingCrates}/${Game.crates.length})`);
+          p.x = Game.gate.x - p.w - 10;
+          p.vx = 0;
+        } else {
+          if (!Game.gate.unlocked) {
+            Game.triggerQuestion(Game.gate.questionIdx, null, true);
+          } else {
+            if (Game.stage === 1) {
+              Game.showStageSuccess("TAHNIAH! Pintu Zon 1 Dibuka! Menuju ke Zon 2!");
+            } else if (Game.stage === 3) {
+              Game.showStageSuccess("TAHNIAH! Berjaya Memintas Virus X! Menuju ke Bom Rational!");
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (Game.boss) {
+    Game.boss.update(dt, p);
+  }
+
+  if (Game.chasingVirus) {
+    Game.chasingVirus.update(dt, p);
+  }
+
+  for (let i = Game.enemies.length - 1; i >= 0; i--) {
+    const e = Game.enemies[i];
+    e.update(dt, p);
+    if (p.x + p.w > e.x && p.x < e.x + e.w &&
+        p.y + p.h > e.y && p.y < e.y + e.h) {
+      p.hurt(1);
+    }
+  }
+
+  // Perlanggaran Peluru
+  for (let i = Game.playerBullets.length - 1; i >= 0; i--) {
+    const b = Game.playerBullets[i];
+    b.update();
+
+    if (Game.questionCooldown <= 0) {
+      for (const c of Game.crates) {
+        if (!c.opened && !c.touchOnly &&
+            b.x > c.x && b.x < c.x + c.w &&
+            b.y > c.y && b.y < c.y + c.h) {
+          b.alive = false;
+          Game.triggerQuestion(c.questionIdx, c);
+          break;
+        }
+      }
+    }
+
+    if (b.alive) {
+      for (let j = Game.enemies.length - 1; j >= 0; j--) {
+        const e = Game.enemies[j];
+        if (b.x > e.x && b.x < e.x + e.w &&
+            b.y > e.y && b.y < e.y + e.h) {
+          b.alive = false;
+          e.hp -= (b.isPower ? 2 : 1);
+          Sound.hit();
+          if (e.hp <= 0) {
+            Game.enemies.splice(j, 1);
+            p.addAmmo(2);
+          }
+          break;
+        }
+      }
+    }
+
+    if (b.alive && Game.boss) {
+      const boss = Game.boss;
+      if (b.x > boss.x && b.x < boss.x + boss.w &&
+          b.y > boss.y && b.y < boss.y + boss.h) {
+        b.alive = false;
+        boss.takeHit(b.isPower);
+      }
+    }
+
+    if (!b.alive) Game.playerBullets.splice(i, 1);
+  }
+
+  for (let i = Game.enemyBullets.length - 1; i >= 0; i--) {
+    const eb = Game.enemyBullets[i];
+    eb.update();
+    if (eb.x > p.x && eb.x < p.x + p.w &&
+        eb.y > p.y && eb.y < p.y + p.h) {
+      eb.alive = false;
+      p.hurt(1);
+    }
+    if (!eb.alive) Game.enemyBullets.splice(i, 1);
+  }
+
+  for (let i = Game.particles.length - 1; i >= 0; i--) {
+    const prt = Game.particles[i];
+    prt.update(dt);
+    if (!prt.alive) Game.particles.splice(i, 1);
+  }
+}
+
+function renderGame() {
+  ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, 540);
+  bgGrad.addColorStop(0, '#0c1224');
+  bgGrad.addColorStop(1, '#192446');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, 960, 540);
+
+  ctx.save();
+  ctx.fillStyle = '#141d36';
+  for (let i = 0; i < 18; i++) {
+    const bx = (i * 140) - (Game.cameraX * 0.2) % 2000;
+    ctx.fillRect(bx, 200 + (i % 4) * 30, 90, 340);
+  }
+
+  ctx.fillStyle = '#1c284a';
+  for (let i = 0; i < 14; i++) {
+    const bx = (i * 200) - (Game.cameraX * 0.45) % 2400;
+    const bh = 220 + (i % 3) * 40;
+    ctx.fillRect(bx, 540 - bh, 130, bh);
+    ctx.fillStyle = 'rgba(255, 215, 94, 0.15)';
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 3; c++) {
+        ctx.fillRect(bx + 18 + c * 34, 540 - bh + 25 + r * 35, 14, 18);
+      }
+    }
+    ctx.fillStyle = '#1c284a';
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(-Math.floor(Game.cameraX), 0);
+
+  for (const p of Game.platforms) p.draw(ctx);
+  if (Game.generator) Game.generator.draw(ctx);
+  if (Game.gate) Game.gate.draw(ctx);
+  for (const core of Game.energyCores) core.draw(ctx);
+  for (const c of Game.crates) c.draw(ctx);
+  for (const e of Game.enemies) e.draw(ctx);
+  if (Game.boss) Game.boss.draw(ctx);
+  if (Game.chasingVirus) Game.chasingVirus.draw(ctx);
+
+  for (const prt of Game.particles) prt.draw(ctx);
+  for (const b of Game.playerBullets) b.draw(ctx);
+  for (const eb of Game.enemyBullets) eb.draw(ctx);
+  if (Game.player) Game.player.draw(ctx);
+
+  ctx.restore();
+  renderObjectivePointer();
+}
+
+function renderObjectivePointer() {
+  if (!Game.player) return;
+  let target = null;
+  const nextCore = Game.energyCores.find(co => !co.collected);
+  const nextCrate = Game.crates.find(c => !c.opened);
+
+  if (Game.generator && !Game.generator.poweredOn) target = { x: Game.generator.x + 40, y: Game.generator.y, label: "PENJANA" };
+  else if (nextCore) target = { x: nextCore.x, y: nextCore.y, label: "TERAS" };
+  else if (nextCrate) target = { x: nextCrate.x, y: nextCrate.y, label: "?" };
+  else if (Game.gate) target = { x: Game.gate.x, y: Game.gate.y, label: "PINTU" };
+
+  if (!target) return;
+
+  const screenTargetX = target.x - Game.cameraX;
+  if (screenTargetX < 0 || screenTargetX > 960) {
+    const pulse = Math.sin(Date.now() / 200) * 3;
+    ctx.save();
+    ctx.fillStyle = '#ffd75e';
+    ctx.font = 'bold 13px sans-serif';
+
+    if (screenTargetX > 960) {
+      ctx.textAlign = 'right';
+      ctx.fillText(`${target.label} ▶`, 940 - pulse, 130);
+    } else {
+      ctx.textAlign = 'left';
+      ctx.fillText(`◀ ${target.label}`, 20 + pulse, 130);
+    }
+    ctx.restore();
+  }
+}
+
+Game.init();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
